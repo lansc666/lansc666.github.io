@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<!-- 已将至关重要的 viewport 标签添加回来 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我的足迹地图</title>
 <style>
@@ -13,13 +14,13 @@
         flex-direction: column;
         justify-content: center; 
         align-items: center;
-        overflow-x: hidden; /* 防止意外的横向滚动 */
+        overflow-x: hidden; 
     }
     .header-container {
         text-align: center;
-        padding: 0 20px; /* 在移动端增加左右内边距 */
+        padding: 0 20px;
         margin-bottom: 25px;
-        margin-top: 20px; /* 增加顶部间距 */
+        margin-top: 20px;
     }
     .header-container h1 {
         margin: 0;
@@ -41,99 +42,48 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
         border-radius: 12px; 
         overflow: hidden;
-        transition: all 0.3s ease; /* 为布局变化增加平滑过渡 */
+        transition: all 0.3s ease;
     }
-    #map-container { 
-        flex: 3; 
-        height: 100%; 
-    }
-    #chinaMap { 
-        width: 100%; 
-        height: 100%; 
-    }
+    #map-container { flex: 3; height: 100%; }
+    #chinaMap { width: 100%; height: 100%; }
     #sidebar {
-        flex: 1; 
-        min-width: 300px; 
-        display: flex; 
-        flex-direction: column;
-        border-left: 1px solid #e0e0e0; 
-        background-color: #fafcfe;
+        flex: 1; min-width: 300px; display: flex; flex-direction: column;
+        border-left: 1px solid #e0e0e0; background-color: #fafcfe;
     }
-    .sidebar-content {
-        padding: 25px; 
-        overflow-y: auto; 
-        flex-grow: 1;
-    }
-    #search-container {
-        padding: 20px 25px; 
-        border-bottom: 1px solid #e0e0e0;
-    }
-    #search {
-        width: 100%; padding: 10px 12px; font-size: 14px;
-        border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    #search:focus {
-        border-color: #5cacec; box-shadow: 0 0 0 3px rgba(92, 172, 236, 0.2); outline: none;
-    }
-    .province {
-        font-weight: bold; font-size: 18px; color: #333;
-        cursor: pointer; margin-top: 20px; margin-bottom: 10px;
-        padding: 8px 0; border-bottom: 1px solid #eee;
-    }
+    .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
+    #search-container { padding: 20px 25px; border-bottom: 1px solid #e0e0e0; }
+    #search { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
+    #search:focus { border-color: #5cacec; box-shadow: 0 0 0 3px rgba(92, 172, 236, 0.2); outline: none; }
+    .province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
     .province:first-child { margin-top: 0; }
-    .city-list {
-        margin-left: 10px; display: block;
-    }
-    .city {
-        padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer;
-        transition: background-color 0.2s ease, transform 0.2s ease;
-        border: 1px solid #ddd; background-color: #fff;
-    }
-    .city:hover {
-        background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec;
-    }
+    .city-list { margin-left: 10px; display: block; }
+    .city { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; border: 1px solid #ddd; background-color: #fff; }
+    .city:hover { background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec; }
     .city .city-name { font-weight: 500; color: #333; }
     .city .travel-time { font-size: 12px; color: #777; margin-top: 4px; }
-    .tooltip-card {
-        padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        background: #fff; width: 220px; border: 1px solid #ccc; text-align: center;
-    }
-    .tooltip-card img {
-        width: 100%; height: auto; border-radius: 4px; margin-top: 8px;
-        background-color: #eee;
-    }
+    .tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
+    .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; }
     .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
     .tooltip-card .time { font-size: 13px; color: #666; }
 
-<pre><code>/* --- 新增的媒体查询，用于移动端适配 --- */
-@media (max-width: 800px) &#123;
-    body &#123;
-        justify-content: flex-start; /* 内容从顶部开始，而不是垂直居中 */
-    &#125;
-    .header-container h1 &#123;
-        font-size: 1.8rem; /* 在小屏幕上减小主标题字号 */
-    &#125;
+<pre><code>@media (max-width: 800px) &#123;
+    body &#123; justify-content: flex-start; &#125;
+    .header-container h1 &#123; font-size: 1.8rem; &#125;
     .page-container &#123;
-        flex-direction: column; /* 关键：将布局从横向变为纵向 */
+        flex-direction: column;
         width: 100%;
-        height: auto; /* 高度由内容决定 */
+        height: auto;
         max-width: 100%;
-        border-radius: 0; /* 去掉圆角，实现全屏效果 */
-        box-shadow: none; /* 去掉阴影 */
+        border-radius: 0;
+        box-shadow: none;
     &#125;
-    #map-container &#123;
-        height: 40vh; /* 给地图一个固定的高度 */
-        flex: none; /* 取消flex比例 */
-    &#125;
+    #map-container &#123; height: 40vh; flex: none; &#125;
     #sidebar &#123;
-        min-width: 100%; /* 侧边栏宽度占满 */
-        border-left: none; /* 去掉左边框 */
-        border-top: 1px solid #e0e0e0; /* 增加上边框作为分隔 */
+        min-width: 100%;
+        border-left: none;
+        border-top: 1px solid #e0e0e0;
     &#125;
-    .sidebar-content &#123;
-        padding-bottom: 50px; /* 为底部留出更多空间 */
-    &#125;
+    .sidebar-content &#123; padding-bottom: 50px; &#125;
 &#125;
 </code></pre>
 <p></style></p>
@@ -240,4 +190,4 @@
     });
 </script>
 </body>
-</html>```
+</html>
