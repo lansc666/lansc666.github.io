@@ -5,122 +5,214 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我的足迹地图</title>
 <style>
-body, html {
-    margin: 0; padding: 0; height: 100vh; width: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f4f7f9; display: flex; justify-content: center; align-items: center;
-}
-.page-container {
-    display: flex; width: 90%; max-width: 1400px; height: 85vh;
-    background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden;
-}
-#map-container { flex: 3; height: 100%; }
-#chinaMap { width: 100%; height: 100%; }
-#sidebar {
-    flex: 1; padding: 25px; border-left: 1px solid #e0e0e0;
-    overflow-y: auto; background-color: #fafcfe;
-}
-#sidebar h2 {
-    margin-top: 0; margin-bottom: 20px; color: #333; font-size: 22px;
-    border-bottom: 2px solid #5cacec; padding-bottom: 10px;
-}
-#city-list { list-style: none; padding: 0; margin: 0; }
-#city-list li {
-    padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease;
-    border: 1px solid #ddd; background-color: #fff;
-}
-#city-list li:hover {
-    background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec;
-}
-#city-list li .city-name { font-weight: 500; color: #333; }
-#city-list li .travel-time { font-size: 12px; color: #777; margin-top: 4px; }
-.tooltip-card {
-    padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    background: #fff; width: 220px; border: 1px solid #ccc;
-}
-.tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; }
-.tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
-.tooltip-card .time { font-size: 13px; color: #666; }
+    body, html {
+        margin: 0; padding: 0; height: 100vh; width: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #f4f7f9; 
+        display: flex; 
+        flex-direction: column; /* 改为垂直布局 */
+        justify-content: center; 
+        align-items: center;
+    }
+    .header-container {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    .header-container h1 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    .header-container p {
+        margin: 8px 0 0;
+        color: #7f8c8d;
+        font-size: 1rem;
+    }
+    .page-container {
+        display: flex; width: 90%; max-width: 1400px; height: 80vh; /* 调整高度以适应标题 */
+        background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden;
+    }
+    #map-container { flex: 3; height: 100%; }
+    #chinaMap { width: 100%; height: 100%; }
+    #sidebar {
+        flex: 1; min-width: 300px; display: flex; flex-direction: column;
+        border-left: 1px solid #e0e0e0; background-color: #fafcfe;
+    }
+    .sidebar-content {
+        padding: 25px; overflow-y: auto; flex-grow: 1;
+    }
+    #search-container {
+        padding: 20px 25px; border-bottom: 1px solid #e0e0e0;
+    }
+    #search {
+        width: 100%; padding: 10px 12px; font-size: 14px;
+        border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #search:focus {
+        border-color: #5cacec; box-shadow: 0 0 0 3px rgba(92, 172, 236, 0.2); outline: none;
+    }
+    .province {
+        font-weight: bold; font-size: 18px; color: #333;
+        cursor: pointer; margin-top: 20px; margin-bottom: 10px;
+        padding: 8px 0; border-bottom: 1px solid #eee;
+    }
+    .province:first-child { margin-top: 0; }
+    .city-list {
+        margin-left: 10px; display: block;
+    }
+    .city {
+        padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+        border: 1px solid #ddd; background-color: #fff;
+    }
+    .city:hover {
+        background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec;
+    }
+    .city .city-name { font-weight: 500; color: #333; }
+    .city .travel-time { font-size: 12px; color: #777; margin-top: 4px; }
+    .tooltip-card {
+        padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        background: #fff; width: 220px; border: 1px solid #ccc; text-align: center;
+    }
+    .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; }
+    .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
+    .tooltip-card .time { font-size: 13px; color: #666; }
 </style>
 </head>
 <body>
+
+<div class="header-container">
+    <h1>MrBlue的旅行足迹地图</h1>
+    <p>点击侧边栏或地图上的高亮区域查看“一城一照”，支持交互式缩放和城市搜索。截至2025年8月。</p>
+</div>
+
 <div class="page-container">
-<div id="map-container">
-<div id="chinaMap"></div>
+    <div id="map-container">
+        <div id="chinaMap"></div>
+    </div>
+    <div id="sidebar">
+        <div id="search-container">
+            <input type="text" id="search" placeholder="搜索城市...">
+        </div>
+        <div class="sidebar-content">
+            <div id="cityListContainer"></div>
+        </div>
+    </div>
 </div>
-<div id="sidebar">
-<h2>足迹列表</h2>
-<ul id="city-list"></ul>
-</div>
-</div>
+
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const travelData = [
-      { name: "澳门特别行政区", time: "2024年6月", img: "https://i.imgs.ovh/2025/08/04/YFM1A.jpeg" },
-      { name: "广州市", time: "2024年3月", img: "https://file.ipadown.com/tophub/assets/images/default_ava1.jpg" },
-    ];
-    const chartDom = document.getElementById('chinaMap');
-    const myChart = echarts.init(chartDom);
-    const cityList = document.getElementById('city-list');
+    const geoJsonPath = "/travel-map/city.geojson";
+    // --- 修改点：定义旅行数据JSON文件的路径 ---
+    const travelDataPath = "/travel-map/travelData.json"; 
 
-<pre><code>travelData.forEach(city =&gt; &#123;
-    const li = document.createElement(&#39;li&#39;);
-    li.setAttribute(&#39;data-city&#39;, city.name);
-    li.innerHTML = `&lt;div class=&quot;city-name&quot;&gt;$&#123;city.name&#125;&lt;/div&gt;&lt;div class=&quot;travel-time&quot;&gt;$&#123;city.time&#125;&lt;/div&gt;`;
-    cityList.appendChild(li);
+    const myChart = echarts.init(document.getElementById('chinaMap'));
+    const cityListContainer = document.getElementById('cityListContainer');
+    const searchInput = document.getElementById('search');
 
-    // 鼠标悬停时，高亮地图对应区域
-    li.addEventListener(&#39;mouseover&#39;, () =&gt; myChart.dispatchAction(&#123; type: &#39;highlight&#39;, name: city.name &#125;));
-    li.addEventListener(&#39;mouseout&#39;, () =&gt; myChart.dispatchAction(&#123; type: &#39;downplay&#39;, name: city.name &#125;));
+    // --- 修改点：使用 Promise.all 并行加载两个JSON文件 ---
+    Promise.all([
+      fetch(geoJsonPath).then(res => res.json()),
+      fetch(travelDataPath).then(res => res.json())
+    ])
+    .then(([geoJson, travelData]) => {
+      // 当两个文件都加载成功后，这里的代码才会执行
+      // geoJson 和 travelData 变量已包含各自文件的数据
+      
+      echarts.registerMap('china-city', geoJson);
 
-    // --- 【新增功能】 ---
-    // 当点击列表项时，手动触发地图的 tooltip 显示
-    li.addEventListener(&#39;click&#39;, () =&gt; &#123;
-        myChart.dispatchAction(&#123;
-            type: &#39;showTip&#39;,    // 动作类型：显示提示框
-            seriesIndex: 0,     // 指定在第一个系列上触发
-            name: city.name     // 告诉 ECharts 要为哪个城市显示提示框
-        &#125;);
-    &#125;);
-    // --------------------
-&#125;);
+        const option = {
+          tooltip: {
+            trigger: 'item',
+            confine: true, // 确保 tooltip 总在图表区域内
+            formatter: function(params) {
+              const info = travelData.find(d => d.name === params.name);
+              if (info) {
+                return `<div class="tooltip-card">
+                          <div class="city">${info.name}</div>
+                          <div class="time">旅行时间：${info.time}</div>
+                          <img src="${info.image}" alt="${info.name}">
+                        </div>`;
+              }
+              return params.name;
+            }
+          },
+          series: [{
+            type: 'map',
+            map: 'china-city',
+            roam: true,
+            itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+            emphasis: { label: { show: false }, itemStyle: { areaColor: '#4682B4' }},
+            data: travelData.map(d => ({ name: d.name, itemStyle: { areaColor: '#5cacec' }}))
+          }]
+        };
+        myChart.setOption(option);
 
-fetch(&#39;/travel-map/city.geojson&#39;)
-  .then(r =&gt; r.json())
-  .then(geoJson =&gt; &#123;
-    echarts.registerMap(&#39;china-city&#39;, geoJson);
-    const option = &#123;
-      tooltip: &#123;
-        trigger: &#39;item&#39;,
-        // confine: true, // 如果希望 tooltip 不会超出图表范围，可以取消此行注释
-        formatter: function(params) &#123;
-          const info = travelData.find(d =&gt; d.name === params.name);
-          if (info) &#123;
-            return `&lt;div class=&quot;tooltip-card&quot;&gt;&lt;div class=&quot;city&quot;&gt;$&#123;params.name&#125;&lt;/div&gt;&lt;div class=&quot;time&quot;&gt;旅行时间：$&#123;info.time&#125;&lt;/div&gt;&lt;img src=&quot;$&#123;info.img&#125;&quot;&gt;&lt;/div&gt;`;
-          &#125;
-          return params.name;
-        &#125;
-      &#125;,
-      series: [&#123;
-        type: &#39;map&#39;,
-        map: &#39;china-city&#39;,
-        roam: true,
-        itemStyle: &#123; areaColor: &#39;#e9f1f6&#39;, borderColor: &#39;#b9d4e9&#39;, borderWidth: 1 &#125;,
-        emphasis: &#123; label: &#123; show: false &#125;, itemStyle: &#123; areaColor: &#39;#87CEFA&#39; &#125;&#125;,
-        data: travelData.map(d =&gt; (&#123; name: d.name, itemStyle: &#123; areaColor: &#39;#5cacec&#39; &#125;&#125;))
-      &#125;]
-    &#125;;
-    myChart.setOption(option);
-  &#125;)
-  .catch(error =&gt; &#123;
-      console.error(&quot;加载地图数据失败:&quot;, error);
-      chartDom.innerHTML = &quot;地图数据加载失败，请检查GeoJSON文件路径或网络连接。&quot;;
-  &#125;);
+        const groupedByProvince = travelData.reduce((acc, city) => {
+          if (!acc[city.province]) {
+            acc[city.province] = [];
+          }
+          acc[city.province].push(city);
+          return acc;
+        }, {});
 
-window.addEventListener(&#39;resize&#39;, () =&gt; myChart.resize());
-</code></pre>
-<p>});<br></script></p>
+        function renderList(filterKeyword = '') {
+            cityListContainer.innerHTML = '';
+            for (const province in groupedByProvince) {
+                const cities = groupedByProvince[province];
+                
+                const filteredCities = cities.filter(city => city.name.includes(filterKeyword));
+
+                if (filteredCities.length > 0) {
+                    const provinceDiv = document.createElement('div');
+                    provinceDiv.className = 'province';
+                    provinceDiv.textContent = province;
+                    
+                    const citySubListDiv = document.createElement('div');
+                    citySubListDiv.className = 'city-list';
+
+                    filteredCities.forEach(city => {
+                        const cityDiv = document.createElement('div');
+                        cityDiv.className = 'city';
+                        cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
+                        
+                        cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
+                        cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
+                        cityDiv.addEventListener('click', () => {
+                            myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
+                        });
+
+                        citySubListDiv.appendChild(cityDiv);
+                    });
+
+                    cityListContainer.appendChild(provinceDiv);
+                    cityListContainer.appendChild(citySubListDiv);
+
+                    provinceDiv.addEventListener('click', () => {
+                        const isHidden = citySubListDiv.style.display === 'none';
+                        citySubListDiv.style.display = isHidden ? 'block' : 'none';
+                    });
+                }
+            }
+        }
+        
+        renderList();
+
+        searchInput.addEventListener('input', function() {
+            renderList(this.value.trim());
+        });
+
+      })
+      .catch(error => {
+          console.error("加载地图数据失败:", error);
+          document.getElementById('chinaMap').innerHTML = "地图数据加载失败，请检查GeoJSON文件路径或网络连接。";
+      });
+
+    window.addEventListener('resize', () => myChart.resize());
+});
+</script>
 </body>
 </html>
