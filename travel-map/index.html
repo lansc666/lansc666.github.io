@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的足迹地图</title>
+<style>
+body, html {
+    margin: 0; padding: 0; height: 100vh; width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f7f9; display: flex; justify-content: center; align-items: center;
+}
+.page-container {
+    display: flex; width: 90%; max-width: 1400px; height: 85vh;
+    background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden;
+}
+#map-container { flex: 3; height: 100%; }
+#chinaMap { width: 100%; height: 100%; }
+#sidebar {
+    flex: 1; padding: 25px; border-left: 1px solid #e0e0e0;
+    overflow-y: auto; background-color: #fafcfe;
+}
+#sidebar h2 {
+    margin-top: 0; margin-bottom: 20px; color: #333; font-size: 22px;
+    border-bottom: 2px solid #5cacec; padding-bottom: 10px;
+}
+#city-list { list-style: none; padding: 0; margin: 0; }
+#city-list li {
+    padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    border: 1px solid #ddd; background-color: #fff;
+}
+#city-list li:hover {
+    background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec;
+}
+#city-list li .city-name { font-weight: 500; color: #333; }
+#city-list li .travel-time { font-size: 12px; color: #777; margin-top: 4px; }
+.tooltip-card {
+    padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    background: #fff; width: 220px; border: 1px solid #ccc;
+}
+.tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; }
+.tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
+.tooltip-card .time { font-size: 13px; color: #666; }
+</style>
+</head>
+<body>
+<div class="page-container">
+<div id="map-container">
+<div id="chinaMap"></div>
+</div>
+<div id="sidebar">
+<h2>足迹列表</h2>
+<ul id="city-list"></ul>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const travelData = [
+      { name: "澳门特别行政区", time: "2024年6月", img: "https://i.imgs.ovh/2025/08/04/YFM1A.jpeg" },
+      { name: "广州市", time: "2024年3月", img: "https://file.ipadown.com/tophub/assets/images/default_ava1.jpg" },
+    ];
+    const chartDom = document.getElementById('chinaMap');
+    const myChart = echarts.init(chartDom);
+    const cityList = document.getElementById('city-list');
+    travelData.forEach(city => {
+        const li = document.createElement('li');
+        li.setAttribute('data-city', city.name);
+        li.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
+        cityList.appendChild(li);
+        li.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
+        li.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
+    });
+    fetch('/travel-map/city.geojson')
+      .then(r => r.json())
+      .then(geoJson => {
+        echarts.registerMap('china-city', geoJson);
+        const option = {
+          tooltip: {
+            trigger: 'item',
+            formatter: function(params) {
+              const info = travelData.find(d => d.name === params.name);
+              if (info) {
+                return `<div class="tooltip-card"><div class="city">${params.name}</div><div class="time">旅行时间：${info.time}</div><img src="${info.img}"></div>`;
+              }
+              return params.name;
+            }
+          },
+          series: [{
+            type: 'map',
+            map: 'china-city',
+            roam: true,
+            itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+            emphasis: { label: { show: false }, itemStyle: { areaColor: '#87CEFA' }},
+            data: travelData.map(d => ({ name: d.name, itemStyle: { areaColor: '#5cacec' }}))
+          }]
+        };
+        myChart.setOption(option);
+      })
+      .catch(error => {
+          console.error("加载地图数据失败:", error);
+          chartDom.innerHTML = "地图数据加载失败，请检查GeoJSON文件路径或网络连接。";
+      });
+    window.addEventListener('resize', () => myChart.resize());
+});
+</script>
+</body>
+</html>
