@@ -1,55 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<!-- 已将至关重要的 viewport 标签添加回来 -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的足迹地图</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的足迹地图</title>
 <style>
-    body, html {
-        margin: 0; padding: 0; height: 100vh; width: 100%;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        background-color: #f4f7f9; 
-        display: flex; 
-        flex-direction: column;
-        justify-content: center; 
-        align-items: center;
-        overflow-x: hidden; 
-    }
-    .header-container {
-        text-align: center;
-        padding: 0 20px;
-        margin-bottom: 25px;
-        margin-top: 20px;
-    }
-    .header-container h1 {
-        margin: 0;
-        font-size: 2.2rem;
-        font-weight: 600;
-        color: #2c3e50;
-    }
-    .header-container p {
-        margin: 8px 0 0;
-        color: #7f8c8d;
-        font-size: 1rem;
-    }
-    .page-container {
-        display: flex; 
-        width: 90%; 
-        max-width: 1400px; 
-        height: 80vh; 
-        background: #fff; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-        border-radius: 12px; 
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-    #map-container { flex: 3; height: 100%; }
+    body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-x: hidden; }
+    .header-container { text-align: center; padding: 0 20px; margin-bottom: 25px; margin-top: 20px; }
+    .header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
+    .header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; }
+    .page-container { display: flex; width: 90%; max-width: 1400px; height: 80vh; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
+    #map-container { position: relative; flex: 3; height: 100%; }
     #chinaMap { width: 100%; height: 100%; }
-    #sidebar {
-        flex: 1; min-width: 300px; display: flex; flex-direction: column;
-        border-left: 1px solid #e0e0e0; background-color: #fafcfe;
-    }
+    .loading-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.8); color: #888; font-size: 16px; z-index: 10; transition: opacity 0.3s; }
+    #sidebar { flex: 1; min-width: 300px; display: flex; flex-direction: column; border-left: 1px solid #e0e0e0; background-color: #fafcfe; }
     .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
     #search-container { padding: 20px 25px; border-bottom: 1px solid #e0e0e0; }
     #search { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -65,129 +29,153 @@
     .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; }
     .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
     .tooltip-card .time { font-size: 13px; color: #666; }
-
-<pre><code>@media (max-width: 800px) &#123;
-    body &#123; justify-content: flex-start; &#125;
-    .header-container h1 &#123; font-size: 1.8rem; &#125;
-    .page-container &#123;
-        flex-direction: column;
-        width: 100%;
-        height: auto;
-        max-width: 100%;
-        border-radius: 0;
-        box-shadow: none;
-    &#125;
-    #map-container &#123; height: 40vh; flex: none; &#125;
-    #sidebar &#123;
-        min-width: 100%;
-        border-left: none;
-        border-top: 1px solid #e0e0e0;
-    &#125;
-    .sidebar-content &#123; padding-bottom: 50px; &#125;
-&#125;
-</code></pre>
-<p></style></p>
+    @media (max-width: 900px) {
+        body { justify-content: flex-start; }
+        body .header-container h1 { font-size: 1.8rem; }
+        body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
+        body #map-container { height: 40vh; flex: none; }
+        body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
+    }
+</style>
 </head>
 <body>
 
-<!-- HTML内容保持不变 -->
-<div class="header-container">
-    <h1>我的旅行足迹地图</h1>
-    <p>点击侧边栏或地图上的高亮区域查看详情，支持交互式缩放和城市搜索。</p>
-</div>
-<div class="page-container">
-    <div id="map-container"><div id="chinaMap"></div></div>
-    <div id="sidebar">
-        <div id="search-container"><input type="text" id="search" placeholder="搜索城市..."></div>
-        <div class="sidebar-content"><div id="cityListContainer"></div></div>
+    <div class="header-container">
+        <h1>我的旅行足迹地图</h1>
+        <p>点击侧边栏或地图上的高亮区域查看详情，支持交互式缩放和城市搜索。</p>
     </div>
-</div>
 
-<!-- JS脚本保持不变 -->
-<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-<script>
-    // JavaScript code remains the same...
-    document.addEventListener('DOMContentLoaded', function() {
-        const geoJsonPath = "/travel-map/city.geojson";
-        const travelDataPath = "/travel-map/travelData.json"; 
-        const myChart = echarts.init(document.getElementById('chinaMap'));
-        const cityListContainer = document.getElementById('cityListContainer');
-        const searchInput = document.getElementById('search');
-        Promise.all([
-          fetch(geoJsonPath).then(res => res.json()),
-          fetch(travelDataPath).then(res => res.json())
-        ])
-        .then(([geoJson, travelData]) => {
-          echarts.registerMap('china-city', geoJson);
-          const option = {
-            tooltip: {
-              trigger: 'item',
-              confine: true,
-              formatter: function(params) {
-                const info = travelData.find(d => d.name === params.name);
-                if (info) {
-                  return `<div class="tooltip-card">
-                            <div class="city">${info.name}</div>
-                            <div class="time">旅行时间：${info.time}</div>
-                            <img src="${info.image}" alt="${info.name}" loading="lazy" width="220" height="147">
-                          </div>`;
+    <div class="page-container">
+        <div id="map-container">
+            <div class="loading-indicator">地图加载中...</div>
+            <div id="chinaMap"></div>
+        </div>
+        <div id="sidebar">
+            <div id="search-container">
+                <input type="text" id="search" placeholder="搜索城市...">
+            </div>
+            <div class="sidebar-content">
+                <div id="cityListContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const geoJsonPath = "/travel-map/city.geojson";
+            const travelDataPath = "/travel-map/travelData.json";
+            const myChart = echarts.init(document.getElementById('chinaMap'));
+            const cityListContainer = document.getElementById('cityListContainer');
+            const searchInput = document.getElementById('search');
+            const loadingIndicator = document.querySelector('.loading-indicator');
+
+            Promise.all([
+                fetch(geoJsonPath).then(res => res.json()),
+                fetch(travelDataPath).then(res => res.json())
+            ])
+            .then(([geoJson, travelData]) => {
+                loadingIndicator.style.display = 'none';
+                echarts.registerMap('china-city', geoJson);
+
+                const option = {
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        formatter: function(params) {
+                            const info = travelData.find(d => d.name === params.name);
+                            if (info) {
+                                return `<div class="tooltip-card">
+                                            <div class="city">${info.name}</div>
+                                            <div class="time">旅行时间：${info.time}</div>
+                                            <img src="${info.image}" alt="${info.name}" loading="lazy" width="220" height="147">
+                                        </div>`;
+                            }
+                            return params.name;
+                        }
+                    },
+                    series: [{
+                        type: 'map',
+                        map: 'china-city',
+                        roam: true,
+                        itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+                        emphasis: { label: { show: false }, itemStyle: { areaColor: '#4682B4' } },
+                        data: travelData.map(d => ({ name: d.name, itemStyle: { areaColor: '#5cacec' } }))
+                    }]
+                };
+                myChart.setOption(option);
+
+                const groupedByProvince = travelData.reduce((acc, city) => {
+                    if (!acc[city.province]) { acc[city.province] = []; }
+                    acc[city.province].push(city);
+                    return acc;
+                }, {});
+
+                function renderList(filterKeyword = '') {
+                    cityListContainer.innerHTML = '';
+                    for (const province in groupedByProvince) {
+                        const cities = groupedByProvince[province];
+                        const filteredCities = cities.filter(city => city.name.includes(filterKeyword));
+                        
+                        if (filteredCities.length > 0) {
+                            const provinceDiv = document.createElement('div');
+                            provinceDiv.className = 'province';
+                            provinceDiv.textContent = province;
+
+                            const citySubListDiv = document.createElement('div');
+                            citySubListDiv.className = 'city-list';
+
+                            provinceDiv.addEventListener('click', () => {
+                                myChart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
+                                const cityNamesInProvince = cities.map(c => c.name);
+                                
+                                // --- 这里是关键修复 ---
+                                myChart.dispatchAction({
+                                    type: 'highlight',
+                                    seriesIndex: 0,
+                                    name: cityNamesInProvince // 使用正确的关键字 name
+                                });
+
+                                const isHidden = citySubListDiv.style.display === 'none';
+                                citySubListDiv.style.display = isHidden ? 'block' : 'none';
+                            });
+
+                            filteredCities.forEach(city => {
+                                const cityDiv = document.createElement('div');
+                                cityDiv.className = 'city';
+                                cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
+                                
+                                cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
+                                cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
+                                cityDiv.addEventListener('click', (e) => {
+                                    e.stopPropagation(); // 阻止事件冒泡到省份标题
+                                    myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
+                                });
+                                
+                                citySubListDiv.appendChild(cityDiv);
+                            });
+
+                            cityListContainer.appendChild(provinceDiv);
+                            cityListContainer.appendChild(citySubListDiv);
+                        }
+                    }
                 }
-                return params.name;
-              }
-            },
-            series: [{
-                type: 'map',
-                map: 'china-city',
-                roam: true,
-                itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-                emphasis: { label: { show: false }, itemStyle: { areaColor: '#4682B4' }},
-                data: travelData.map(d => ({ name: d.name, itemStyle: { areaColor: '#5cacec' }}))
-            }]
-          };
-          myChart.setOption(option);
-          const groupedByProvince = travelData.reduce((acc, city) => {
-            if (!acc[city.province]) { acc[city.province] = []; }
-            acc[city.province].push(city);
-            return acc;
-          }, {});
-          function renderList(filterKeyword = '') {
-            cityListContainer.innerHTML = '';
-            for (const province in groupedByProvince) {
-                const cities = groupedByProvince[province];
-                const filteredCities = cities.filter(city => city.name.includes(filterKeyword));
-                if (filteredCities.length > 0) {
-                    const provinceDiv = document.createElement('div');
-                    provinceDiv.className = 'province';
-                    provinceDiv.textContent = province;
-                    const citySubListDiv = document.createElement('div');
-                    citySubListDiv.className = 'city-list';
-                    filteredCities.forEach(city => {
-                        const cityDiv = document.createElement('div');
-                        cityDiv.className = 'city';
-                        cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
-                        cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
-                        cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
-                        cityDiv.addEventListener('click', () => { myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name }); });
-                        citySubListDiv.appendChild(cityDiv);
-                    });
-                    cityListContainer.appendChild(provinceDiv);
-                    cityListContainer.appendChild(citySubListDiv);
-                    provinceDiv.addEventListener('click', () => {
-                        const isHidden = citySubListDiv.style.display === 'none';
-                        citySubListDiv.style.display = isHidden ? 'block' : 'none';
-                    });
-                }
-            }
-          }
-          renderList();
-          searchInput.addEventListener('input', function() { renderList(this.value.trim()); });
-        })
-        .catch(error => {
-            console.error("加载地图或旅行数据失败:", error);
-            document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查文件路径或网络连接，并确保JSON格式正确。";
+
+                renderList();
+
+                searchInput.addEventListener('input', function() {
+                    renderList(this.value.trim());
+                });
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none';
+                document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查文件路径或网络连接，并确保JSON格式正确。";
+                console.error("加载地图或旅行数据失败:", error);
+            });
+
+            window.addEventListener('resize', () => myChart.resize());
         });
-        window.addEventListener('resize', () => myChart.resize());
-    });
-</script>
+    </script>
+
 </body>
 </html>
