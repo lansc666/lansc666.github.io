@@ -64,46 +64,63 @@ document.addEventListener('DOMContentLoaded', function() {
     const chartDom = document.getElementById('chinaMap');
     const myChart = echarts.init(chartDom);
     const cityList = document.getElementById('city-list');
-    travelData.forEach(city => {
-        const li = document.createElement('li');
-        li.setAttribute('data-city', city.name);
-        li.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
-        cityList.appendChild(li);
-        li.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
-        li.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
-    });
-    fetch('/travel-map/city.geojson')
-      .then(r => r.json())
-      .then(geoJson => {
-        echarts.registerMap('china-city', geoJson);
-        const option = {
-          tooltip: {
-            trigger: 'item',
-            formatter: function(params) {
-              const info = travelData.find(d => d.name === params.name);
-              if (info) {
-                return `<div class="tooltip-card"><div class="city">${params.name}</div><div class="time">旅行时间：${info.time}</div><img src="${info.img}"></div>`;
-              }
-              return params.name;
-            }
-          },
-          series: [{
-            type: 'map',
-            map: 'china-city',
-            roam: true,
-            itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-            emphasis: { label: { show: false }, itemStyle: { areaColor: '#87CEFA' }},
-            data: travelData.map(d => ({ name: d.name, itemStyle: { areaColor: '#5cacec' }}))
-          }]
-        };
-        myChart.setOption(option);
-      })
-      .catch(error => {
-          console.error("加载地图数据失败:", error);
-          chartDom.innerHTML = "地图数据加载失败，请检查GeoJSON文件路径或网络连接。";
-      });
-    window.addEventListener('resize', () => myChart.resize());
-});
-</script>
+
+<pre><code>travelData.forEach(city =&gt; &#123;
+    const li = document.createElement(&#39;li&#39;);
+    li.setAttribute(&#39;data-city&#39;, city.name);
+    li.innerHTML = `&lt;div class=&quot;city-name&quot;&gt;$&#123;city.name&#125;&lt;/div&gt;&lt;div class=&quot;travel-time&quot;&gt;$&#123;city.time&#125;&lt;/div&gt;`;
+    cityList.appendChild(li);
+
+    // 鼠标悬停时，高亮地图对应区域
+    li.addEventListener(&#39;mouseover&#39;, () =&gt; myChart.dispatchAction(&#123; type: &#39;highlight&#39;, name: city.name &#125;));
+    li.addEventListener(&#39;mouseout&#39;, () =&gt; myChart.dispatchAction(&#123; type: &#39;downplay&#39;, name: city.name &#125;));
+
+    // --- 【新增功能】 ---
+    // 当点击列表项时，手动触发地图的 tooltip 显示
+    li.addEventListener(&#39;click&#39;, () =&gt; &#123;
+        myChart.dispatchAction(&#123;
+            type: &#39;showTip&#39;,    // 动作类型：显示提示框
+            seriesIndex: 0,     // 指定在第一个系列上触发
+            name: city.name     // 告诉 ECharts 要为哪个城市显示提示框
+        &#125;);
+    &#125;);
+    // --------------------
+&#125;);
+
+fetch(&#39;/travel-map/city.geojson&#39;)
+  .then(r =&gt; r.json())
+  .then(geoJson =&gt; &#123;
+    echarts.registerMap(&#39;china-city&#39;, geoJson);
+    const option = &#123;
+      tooltip: &#123;
+        trigger: &#39;item&#39;,
+        // confine: true, // 如果希望 tooltip 不会超出图表范围，可以取消此行注释
+        formatter: function(params) &#123;
+          const info = travelData.find(d =&gt; d.name === params.name);
+          if (info) &#123;
+            return `&lt;div class=&quot;tooltip-card&quot;&gt;&lt;div class=&quot;city&quot;&gt;$&#123;params.name&#125;&lt;/div&gt;&lt;div class=&quot;time&quot;&gt;旅行时间：$&#123;info.time&#125;&lt;/div&gt;&lt;img src=&quot;$&#123;info.img&#125;&quot;&gt;&lt;/div&gt;`;
+          &#125;
+          return params.name;
+        &#125;
+      &#125;,
+      series: [&#123;
+        type: &#39;map&#39;,
+        map: &#39;china-city&#39;,
+        roam: true,
+        itemStyle: &#123; areaColor: &#39;#e9f1f6&#39;, borderColor: &#39;#b9d4e9&#39;, borderWidth: 1 &#125;,
+        emphasis: &#123; label: &#123; show: false &#125;, itemStyle: &#123; areaColor: &#39;#87CEFA&#39; &#125;&#125;,
+        data: travelData.map(d =&gt; (&#123; name: d.name, itemStyle: &#123; areaColor: &#39;#5cacec&#39; &#125;&#125;))
+      &#125;]
+    &#125;;
+    myChart.setOption(option);
+  &#125;)
+  .catch(error =&gt; &#123;
+      console.error(&quot;加载地图数据失败:&quot;, error);
+      chartDom.innerHTML = &quot;地图数据加载失败，请检查GeoJSON文件路径或网络连接。&quot;;
+  &#125;);
+
+window.addEventListener(&#39;resize&#39;, () =&gt; myChart.resize());
+</code></pre>
+<p>});<br></script></p>
 </body>
 </html>
