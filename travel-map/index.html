@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的足迹地图</title>
+    <title>MrBlue的旅行足迹地图</title>
 <style>
     body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-x: hidden; }
     .header-container { text-align: center; padding: 0 20px; margin-bottom: 25px; margin-top: 20px; }
     .header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
-    .header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; }
+    .header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
     .page-container { display: flex; width: 90%; max-width: 1400px; height: 80vh; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
     #map-container { position: relative; flex: 3; height: 100%; }
     #chinaMap { width: 100%; height: 100%; }
@@ -30,11 +30,12 @@
     .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
     .tooltip-card .time { font-size: 13px; color: #666; }
     @media (max-width: 900px) {
-        body { justify-content: flex-start; }
+        html, body { height: auto; justify-content: flex-start; } /* 关键修复：解锁高度 */
         body .header-container h1 { font-size: 1.8rem; }
         body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
         body #map-container { height: 40vh; flex: none; }
         body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
+        body .sidebar-content { overflow-y: visible; } /* 关键修复：禁用内部滚动 */
     }
 </style>
 </head>
@@ -128,14 +129,11 @@
                             provinceDiv.addEventListener('click', () => {
                                 myChart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
                                 const cityNamesInProvince = cities.map(c => c.name);
-                                
-                                // --- 这里是关键修复 ---
                                 myChart.dispatchAction({
                                     type: 'highlight',
                                     seriesIndex: 0,
-                                    name: cityNamesInProvince // 使用正确的关键字 name
+                                    name: cityNamesInProvince
                                 });
-
                                 const isHidden = citySubListDiv.style.display === 'none';
                                 citySubListDiv.style.display = isHidden ? 'block' : 'none';
                             });
@@ -148,7 +146,7 @@
                                 cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
                                 cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
                                 cityDiv.addEventListener('click', (e) => {
-                                    e.stopPropagation(); // 阻止事件冒泡到省份标题
+                                    e.stopPropagation();
                                     myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
                                 });
                                 
