@@ -85,7 +85,7 @@
 
 <div class="header-container">
     <h1>MrBlue的旅行足迹地图</h1>
-    <p>点击侧边栏或地图上的高亮区域查看“一城一照”，支持交互式缩放和城市搜索。截至2025年8月。</p>
+    <p>点击侧边栏或地图上的高亮区域查看“一城一照”（首次加载需要时间），支持交互式缩放和城市搜索。截至2025年8月。</p>
 </div>
 
 <div class="page-container">
@@ -127,14 +127,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const option = {
           tooltip: {
             trigger: 'item',
-            confine: true, // 确保 tooltip 总在图表区域内
+            confine: true,
             formatter: function(params) {
               const info = travelData.find(d => d.name === params.name);
               if (info) {
                 return `<div class="tooltip-card">
                           <div class="city">${info.name}</div>
                           <div class="time">旅行时间：${info.time}</div>
-                          <img src="${info.image}" alt="${info.name}">
+                          <img src="${info.image}" alt="${info.name}" loading="lazy">
                         </div>`;
               }
               return params.name;
