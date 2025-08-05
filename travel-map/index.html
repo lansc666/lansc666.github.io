@@ -38,7 +38,8 @@
         html, body { height: auto; justify-content: flex-start; }
         .header-container h1 { font-size: 1.8rem; }
         body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
-        body #map-container { height: 40vh; flex: none; }
+        /* 【问题4解决】增加手机端地图高度 */
+        body #map-container { height: 50vh; flex: none; }
         body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
         body .sidebar-content { overflow-y: visible; }
         .back-to-top { bottom: 20px; right: 20px; }
@@ -72,7 +73,8 @@
     
     <a href="#" class="back-to-top" title="回到顶部">↑</a>
 
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <!-- 【网络问题解决】更换为国内稳定的CDN -->
+    <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const geoJsonPath = "/travel-map/city.geojson";
@@ -112,6 +114,9 @@
                     tooltip: {
                         trigger: 'item',
                         confine: true,
+                        // 【问题1解决】允许鼠标进入提示框，并设置延迟关闭
+                        enterable: true,
+                        hideDelay: 200,
                         formatter: function(params) {
                             const info = travelData.find(d => d.name === params.name);
                             if (info) {
