@@ -20,40 +20,20 @@
     #search-container { padding: 20px 25px; border-bottom: 1px solid #e0e0e0; }
     #search { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
     #search:focus { border-color: #5cacec; box-shadow: 0 0 0 3px rgba(92, 172, 236, 0.2); outline: none; }
-    #expandCollapseBtn {
-        width: 100%;
-        padding: 10px 12px;
-        margin-top: 10px;
-        font-size: 14px;
-        background-color: #f0f0f0;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s, border-color 0.2s;
-        box-sizing: border-box;
-    }
-    #expandCollapseBtn:hover {
-        background-color: #e0e0e0;
-        border-color: #aaa;
-    }
+    #expandCollapseBtn { width: 100%; padding: 10px 12px; margin-top: 10px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; box-sizing: border-box; }
+    #expandCollapseBtn:hover { background-color: #e0e0e0; border-color: #aaa; }
     .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
-    .province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center;} /* Added flex for alignment */
+    .province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
     .province:first-child { margin-top: 0; }
-    .province-toggle-arrow {
-        display: inline-block;
-        margin-right: 8px;
-        transition: transform 0.2s;
-        font-size: 0.9em; /* Adjust arrow size */
-        color: #888;
-    }
-    .province.expanded .province-toggle-arrow {
-        transform: rotate(90deg);
-    }
-    .city-list { margin-left: 10px; display: none; } /* Default to hidden */
+    .province-toggle-arrow { display: inline-block; margin-right: 8px; transition: transform 0.2s; font-size: 0.9em; color: #888; }
+    .province.expanded .province-toggle-arrow { transform: rotate(90deg); }
+    .city-list { margin-left: 10px; display: none; }
     .city { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; border: 1px solid #ddd; background-color: #fff; }
     .city:hover { background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec; }
     .city .city-name { font-weight: 500; color: #333; }
     .city .travel-time { font-size: 12px; color: #777; margin-top: 4px; }
+    .sidebar-footer { padding: 20px 25px; border-top: 1px solid #e0e0e0; margin-top: auto; text-align: center; background-color: #fafcfe; }
+    .sidebar-footer p { margin: 4px 0; font-size: 12px; color: #999; }
     .tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
     .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; }
     .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
@@ -64,10 +44,10 @@
         html, body { height: auto; justify-content: flex-start; }
         .header-container h1 { font-size: 1.8rem; }
         body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
-        /* 增加手机端地图高度 */
         body #map-container { height: 50vh; flex: none; }
         body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
         body .sidebar-content { overflow-y: visible; }
+        body .sidebar-footer { display: none; } /* 在手机端隐藏页脚，以节省空间 */
         .back-to-top { bottom: 20px; right: 20px; }
         .reset-view-btn { width: 28px; height: 28px; font-size: 18px; }
     }
@@ -77,12 +57,14 @@
 
     <div class="header-container">
         <h1>MrBlue的旅行足迹地图</h1>
-        <p>点击边栏或地图上的高亮区域查看我拍摄的“一城一图”，支持交互式缩放和城市搜索。<br>统计范围：2022年9月-2025年7月。</p>
+        <!-- 【已修改】删除“我拍摄的” -->
+        <p>点击边栏或地图上的高亮区域查看“一城一图”，支持交互式缩放和城市搜索。<br>统计范围：2022年9月-2025年7月。</p>
     </div>
 
     <div class="page-container">
         <div id="map-container">
-            <div class="loading-indicator">地图加载中...</div>
+            <!-- 【已修改】加载提示文字 -->
+            <div class="loading-indicator">地图加载中，请耐心等待……</div>
             <div id="chinaMap"></div>
             <div class="map-approval-number">GS(2024)0650</div>
             <span class="reset-view-btn" title="重置视图">⟲</span>
@@ -90,20 +72,32 @@
         <div id="sidebar">
             <div id="search-container">
                 <input type="text" id="search" placeholder="搜索城市...">
-                <button id="expandCollapseBtn">展开全部</button> <!-- 新增按钮 -->
+                <button id="expandCollapseBtn">展开全部</button>
             </div>
             <div class="sidebar-content">
                 <div id="cityListContainer"></div>
+            </div>
+            <!-- 【已新增】侧边栏页脚 -->
+            <div class="sidebar-footer">
+                <p>照片均为本人拍摄，版权所有</p>
+                <p id="last-updated">最后更新于: </p>
             </div>
         </div>
     </div>
     
     <a href="#" class="back-to-top" title="回到顶部">↑</a>
 
-    <!-- 使用字节跳动的全球CDN -->
+    <!-- 【已确认】使用 Staticfile CDN -->
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 【已新增】动态生成更新日期
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            document.getElementById('last-updated').textContent += `${year}年${month}月${day}日`;
+
             const geoJsonPath = "/travel-map/city.geojson";
             const travelDataPath = "/travel-map/travelData.json";
             const myChart = echarts.init(document.getElementById('chinaMap'));
@@ -112,9 +106,9 @@
             const loadingIndicator = document.querySelector('.loading-indicator');
             const resetViewBtn = document.querySelector('.reset-view-btn');
             const backToTopBtn = document.querySelector('.back-to-top');
-            const expandCollapseBtn = document.getElementById('expandCollapseBtn'); // 获取新增按钮
+            const expandCollapseBtn = document.getElementById('expandCollapseBtn');
 
-            let isAllExpanded = false; // 跟踪全部展开/折叠状态
+            let isAllExpanded = false;
 
             window.addEventListener('scroll', function() {
                 if (window.scrollY > 300) {
@@ -195,16 +189,14 @@
 
                 function renderList(filterKeyword = '') {
                     cityListContainer.innerHTML = '';
-                    isAllExpanded = false; // 重置状态
-                    expandCollapseBtn.textContent = '展开全部'; // 重置按钮文本
+                    isAllExpanded = false;
+                    expandCollapseBtn.textContent = '展开全部';
 
-                    // 将对象转换为数组，以便排序
                     const sortedProvinces = Object.keys(groupedByProvince).map(provinceName => ({
                         name: provinceName,
                         cities: groupedByProvince[provinceName]
                     }));
 
-                    // 按城市数量降序排序省份
                     sortedProvinces.sort((a, b) => {
                         const countA = a.cities.filter(city => city.name.includes(filterKeyword)).length;
                         const countB = b.cities.filter(city => city.name.includes(filterKeyword)).length;
@@ -222,25 +214,23 @@
                             
                             const arrowSpan = document.createElement('span');
                             arrowSpan.className = 'province-toggle-arrow';
-                            arrowSpan.textContent = '▶'; // 默认折叠状态的箭头
+                            arrowSpan.textContent = '▶';
                             
                             const provinceNameSpan = document.createElement('span');
-                            provinceNameSpan.textContent = `${province} (${filteredCities.length})`; // 显示城市数量
+                            provinceNameSpan.textContent = `${province} (${filteredCities.length})`;
                             
                             provinceDiv.appendChild(arrowSpan);
                             provinceDiv.appendChild(provinceNameSpan);
 
                             const citySubListDiv = document.createElement('div');
-                            citySubListDiv.className = 'city-list'; // 默认 display: none 在 CSS 中
+                            citySubListDiv.className = 'city-list';
 
                             provinceDiv.addEventListener('click', () => {
-                                // 切换展开/折叠状态
                                 const isHidden = citySubListDiv.style.display === 'none';
                                 citySubListDiv.style.display = isHidden ? 'block' : 'none';
-                                provinceDiv.classList.toggle('expanded', isHidden); // 添加/移除 expanded class
+                                provinceDiv.classList.toggle('expanded', isHidden);
                                 
-                                // 地图高亮逻辑保持不变
-                                myChart.dispatchAction({ type: 'downplay', seriesIndex: 0 }); // 清除所有高亮
+                                myChart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
                                 const cityNamesInProvince = cities.map(c => c.name);
                                 myChart.dispatchAction({
                                     type: 'highlight',
@@ -257,7 +247,7 @@
                                 cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
                                 cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
                                 cityDiv.addEventListener('click', (e) => {
-                                    e.stopPropagation(); // 阻止事件冒泡到父级 provinceDiv
+                                    e.stopPropagation();
                                     myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
                                 });
                                 
@@ -279,9 +269,8 @@
                     }
                 }
 
-                // 展开/折叠全部按钮的点击事件
                 expandCollapseBtn.addEventListener('click', () => {
-                    isAllExpanded = !isAllExpanded; // 切换状态
+                    isAllExpanded = !isAllExpanded;
                     expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
 
                     const allCityLists = cityListContainer.querySelectorAll('.city-list');
@@ -292,11 +281,10 @@
                     });
                     allProvinceDivs.forEach(provinceDiv => {
                         provinceDiv.classList.toggle('expanded', isAllExpanded);
-                    });
+});
                 });
 
-
-                renderList(); // 初始渲染列表
+                renderList();
 
                 searchInput.addEventListener('input', function() {
                     renderList(this.value.trim());
