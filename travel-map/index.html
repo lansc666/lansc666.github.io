@@ -51,8 +51,6 @@
         body #map-container { height: 50vh; flex: none; }
         body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
         body .sidebar-content { overflow-y: visible; }
-        /* 【已修复】删除此行，让页脚在手机端正常显示在最底部 */
-        /* body .sidebar-footer { display: none; } */
         .back-to-top { bottom: 20px; right: 20px; }
         .reset-view-btn { width: 28px; height: 28px; font-size: 18px; }
     }
@@ -82,12 +80,13 @@
             </div>
             <div class="sidebar-footer">
                 <div class="busuanzi-container">
-                    <span id="busuanzi_container_page_uv" class="busuanzi-item">
-                        <i class="fas fa-user"></i> <span id="busuanzi_value_page_uv"></span>
+                    <!-- 【已修复】使用本页访客(page_uv)和本页浏览(page_pv)，并添加加载中占位符 -->
+                    <span id="busuanzi_page_uv" class="busuanzi-item">
+                        <i class="fas fa-user"></i> <span class="busuanzi-value">加载中...</span>
                     </span>
                     <span class="busuanzi-item">|</span>
-                    <span id="busuanzi_container_page_pv" class="busuanzi-item">
-                        <i class="fas fa-eye"></i> <span id="busuanzi_value_page_pv"></span>
+                    <span id="busuanzi_page_pv" class="busuanzi-item">
+                        <i class="fas fa-eye"></i> <span class="busuanzi-value">加载中...</span>
                     </span>
                 </div>
                 <p>照片均为本人拍摄，版权所有©</p>
@@ -313,8 +312,8 @@
         });
     </script>
     
-    <!-- 【已修复】更换为不蒜子完整版脚本，解决uv不显示问题 -->
-    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.min.js"></script>
+    <!-- 【已修复】使用官方推荐的最新统计脚本 -->
+    <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
 
 </body>
 </html>
