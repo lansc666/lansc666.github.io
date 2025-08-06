@@ -38,7 +38,7 @@
         html, body { height: auto; justify-content: flex-start; }
         .header-container h1 { font-size: 1.8rem; }
         body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
-        /* 【问题4解决】增加手机端地图高度 */
+        /* 【移动端适配解决】增加手机端地图高度 */
         body #map-container { height: 50vh; flex: none; }
         body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
         body .sidebar-content { overflow-y: visible; }
@@ -73,7 +73,7 @@
     
     <a href="#" class="back-to-top" title="回到顶部">↑</a>
 
-    <!-- 【网络问题解决】更换为国内稳定的CDN -->
+    <!-- 【网络问题解决】更换为字节跳动的全球CDN -->
     <script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -110,34 +110,56 @@
                     myChart.dispatchAction({ type: 'restore' });
                 });
 
+                // 【性能问题解决】使用 visualMap 高性能渲染方案
                 const option = {
                     tooltip: {
                         trigger: 'item',
                         confine: true,
-                        // 【问题1解决】允许鼠标进入提示框，并设置延迟关闭
-                        enterable: true,
+                        enterable: true, // 【交互问题解决】允许鼠标进入提示框
                         hideDelay: 200,
                         formatter: function(params) {
-                            const info = travelData.find(d => d.name === params.name);
-                            if (info) {
-                                const descriptionHtml = info.description ? `<div class="desc">${info.describe}</div>` : '';
-                                return `<div class="tooltip-card">
-                                            <div class="city">${info.name}</div>
-                                            <div class="time">旅行时间：${info.time}</div>
-                                            ${descriptionHtml}
-                                            <img src="${info.image}" alt="${info.name}" loading="lazy" width="220" height="147">
-                                        </div>`;
+                            // 判断是否为我们定义过的城市
+                            if (params.data && params.data.value === 1) {
+                                const info = travelData.find(d => d.name === params.name);
+                                if (info) {
+                                    // 【字段名更新】使用 info.describe
+                                    const descriptionHtml = info.describe ? `<div class="desc">${info.describe}</div>` : '';
+                                    return `<div class="tooltip-card">
+                                                <div class="city">${info.name}</div>
+                                                <div class="time">旅行时间：${info.time}</div>
+                                                ${descriptionHtml}
+                                                <img src="${info.image}" alt="${info.name}" loading="lazy" width="220" height="147">
+                                            </div>`;
+                                }
                             }
+                            // 对于未去过的灰色区域，只显示城市名
                             return params.name;
                         }
+                    },
+                    // 使用 visualMap 组件根据数据值进行颜色映射
+                    visualMap: {
+                        type: 'piecewise', // 分段型
+                        show: false,       // 不在地图上显示图例
+                        pieces: [
+                            { value: 1, color: '#5cacec' }, // value为1的城市，显示为浅蓝色
+                        ],
                     },
                     series: [{
                         type: 'map',
                         map: 'china-city',
                         roam: true,
-                        itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-                        emphasis: { label: { show: false }, itemStyle: { areaColor: '#4682B4' } },
-                        data: travelData.map(d => ({ name: d.name, itemStyle: { areaColor: '#5cacec' } }))
+                        // 未去过的地区的默认样式
+                        itemStyle: { 
+                            areaColor: '#e9f1f6', 
+                            borderColor: '#b9d4e9', 
+                            borderWidth: 1 
+                        },
+                        emphasis: { 
+                            label: { show: false }, 
+                            itemStyle: { areaColor: '#4682B4' } 
+                        },
+                        // 将旅行数据标记为 value: 1，交给 visualMap 统一渲染
+                        data: travelData.map(d => ({ name: d.name, value: 1 }))
                     }]
                 };
                 myChart.setOption(option);
