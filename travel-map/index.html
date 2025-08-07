@@ -197,7 +197,7 @@
                 const uniqueYears = new Set(originalTravelData.map(d => d.time.substring(0, 4)));
                 const sortedYears = Array.from(uniqueYears).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
                 
-                yearFilter.innerHTML = '<option value="all">显示全部</option>';
+                yearFilter.innerHTML = '<option value="all">全部年份</option>';
                 if (uniqueYears.has("常住")) {
                      yearFilter.innerHTML += '<option value="常住">常住</option>';
                 }
