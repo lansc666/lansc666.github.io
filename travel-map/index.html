@@ -86,13 +86,9 @@
             </div>
             <div class="sidebar-footer">
 				<div class="busuanzi-container">
-					<div class="busuanzi-item">
-						<i class="fas fa-user"></i> <span id="busuanzi_page_uv">加载中...</span>
-					</div>
+					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_page_uv">加载中...</span></div>
 					<div class="busuanzi-item">|</div>
-					<div class="busuanzi-item">
-						<i class="fas fa-eye"></i> <span id="busuanzi_page_pv">加载中...</span>
-					</div>
+					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_page_pv">加载中...</span></div>
 				</div>
                 <p>照片均为本人拍摄，版权所有©</p>
                 <p id="last-updated">最后更新于: </p>
@@ -107,23 +103,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             const now = new Date();
             const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            const day = now.getDate();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
             document.getElementById('last-updated').textContent += `${year}年${month}月${day}日`;
 
             const geoJsonPath = "/travel-map/city.geojson";
             const travelDataPath = "/travel-map/travelData.json";
+            
             const myChart = echarts.init(document.getElementById('chinaMap'));
             const cityListContainer = document.getElementById('cityListContainer');
             const searchInput = document.getElementById('search');
-            const yearFilter = document.getElementById('year-filter'); // 【新增】获取年份筛选器元素
+            const yearFilter = document.getElementById('year-filter');
             const loadingIndicator = document.querySelector('.loading-indicator');
             const resetViewBtn = document.querySelector('.reset-view-btn');
             const backToTopBtn = document.querySelector('.back-to-top');
             const expandCollapseBtn = document.getElementById('expandCollapseBtn');
 
             let isAllExpanded = false;
-            let originalTravelData = []; // 【新增】用于存储原始的完整旅行数据
+            let originalTravelData = [];
 
             window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
             backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
@@ -135,53 +132,100 @@
             .then(([geoJson, travelData]) => {
                 loadingIndicator.style.display = 'none';
                 echarts.registerMap('china-city', geoJson);
+                originalTravelData = travelData;
 
-                originalTravelData = travelData; // 【新增】保存原始数据
+                // 【修复】1. 定义一个包含所有静态配置的基础Option对象
+                const baseOption = {
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        enterable: true,
+                        hideDelay: 200,
+                        formatter: function(params) {
+                            if (params.data && params.data.value === 1) {
+                                // 在原始数据中查找完整信息
+                                const info = originalTravelData.find(d => d.name === params.name);
+                                if (info) {
+                                    const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
+                                    const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy" width="220" height="147">` : '';
+                                    return `<div class="tooltip-card">
+                                                <div class="city">${info.name}</div>
+                                                <div class="time">首次访问：${info.time}</div>
+                                                ${descriptionHtml}
+                                                ${imageHtml}
+                                            </div>`;
+                                }
+                            }
+                            return params.name;
+                        }
+                    },
+                    visualMap: {
+                        type: 'piecewise',
+                        show: false,
+                        pieces: [{ value: 1, color: '#5cacec' }],
+                    },
+                    series: [{
+                        type: 'map',
+                        map: 'china-city',
+                        roam: true,
+                        itemStyle: { 
+                            areaColor: '#e9f1f6', 
+                            borderColor: '#b9d4e9', 
+                            borderWidth: 1 
+                        },
+                        emphasis: {
+                            label: { show: false },
+                            itemStyle: {
+                                areaColor: '#E58B47',
+                                borderColor: '#FFF',
+                                borderWidth: 2
+                            }
+                        },
+                        // data在这里先留空，由updateAndRender函数填充
+                        data: [] 
+                    }]
+                };
+                
+                // 【修复】2. 先用基础配置初始化ECharts实例
+                myChart.setOption(baseOption);
 
-                // --- 【新增】动态填充年份筛选器 ---
                 const years = new Set(travelData.map(d => d.time.substring(0, 4)).filter(year => !isNaN(year)));
                 const sortedYears = Array.from(years).sort((a, b) => b - a);
                 yearFilter.innerHTML = '<option value="all">全部年份</option>';
                 sortedYears.forEach(year => {
                     yearFilter.innerHTML += `<option value="${year}">${year}年</option>`;
                 });
-                // --- 结束填充 ---
-
+                
                 resetViewBtn.addEventListener('click', () => myChart.dispatchAction({ type: 'restore' }));
 
-                const option = { /* ... 您的ECharts配置保持不变 ... */ };
-                myChart.setOption(option, true); // 使用 true 确保配置合并
-
-                // --- 【重构】核心渲染逻辑 ---
                 function updateAndRender() {
                     const selectedYear = yearFilter.value;
-                    const keyword = searchInput.value.trim();
+                    const keyword = searchInput.value.trim().toLowerCase();
 
-                    // 1. 根据年份筛选数据
-                    let yearFilteredData = originalTravelData;
+                    let filteredData = originalTravelData;
+
                     if (selectedYear !== 'all') {
-                        yearFilteredData = originalTravelData.filter(d => d.time.startsWith(selectedYear));
+                        filteredData = filteredData.filter(d => d.time.startsWith(selectedYear));
+                    }
+                    if (keyword) {
+                        filteredData = filteredData.filter(city => city.name.toLowerCase().includes(keyword));
                     }
                     
-                    // 2. 更新地图
+                    // 【修复】3. 更新地图时，只更新series中的data部分
                     myChart.setOption({
                         series: [{
-                            data: yearFilteredData.map(d => ({ name: d.name, value: 1 }))
+                            data: filteredData.map(d => ({ name: d.name, value: 1 }))
                         }]
                     });
 
-                    // 3. 根据搜索关键字筛选数据并更新侧边栏
-                    const finalFilteredData = yearFilteredData.filter(city => city.name.includes(keyword));
-                    renderList(finalFilteredData, keyword !== '');
+                    renderList(filteredData);
                 }
 
-                function renderList(dataToRender, isSearching) {
+                function renderList(dataToRender) {
                     cityListContainer.innerHTML = '';
-                    if (!isSearching) { // 只有在非搜索状态下才重置展开状态
-                        isAllExpanded = false;
-                        expandCollapseBtn.textContent = '展开全部';
-                    }
-
+                    isAllExpanded = false;
+                    expandCollapseBtn.textContent = '展开全部';
+                    // ... (renderList 内部逻辑保持不变，除了接收的参数)
                     const groupedByProvince = dataToRender.reduce((acc, city) => {
                         if (!acc[city.province]) { acc[city.province] = []; }
                         acc[city.province].push(city);
@@ -195,13 +239,13 @@
                         const provinceDiv = document.createElement('div');
                         provinceDiv.className = 'province';
                         provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
-
+                        
                         const citySubListDiv = document.createElement('div');
                         citySubListDiv.className = 'city-list';
 
                         provinceDiv.addEventListener('click', () => {
                             provinceDiv.classList.toggle('expanded');
-                            citySubListDiv.style.display = citySubListDiv.style.display === 'block' ? 'none' : 'block';
+                            citySubListDiv.style.display = provinceDiv.classList.toggle('expanded') ? 'block' : 'none';
                         });
 
                         cities.forEach(city => {
@@ -222,8 +266,7 @@
                         cityListContainer.appendChild(provinceDiv);
                         cityListContainer.appendChild(citySubListDiv);
                     });
-
-                    if (cityListContainer.children.length === 0 && dataToRender.length === 0) {
+                     if (cityListContainer.children.length === 0 && dataToRender.length === 0) {
                         const noResultDiv = document.createElement('div');
                         noResultDiv.textContent = '未找到相关城市';
                         noResultDiv.style.textAlign = 'center';
@@ -232,21 +275,19 @@
                         cityListContainer.appendChild(noResultDiv);
                     }
                 }
-                // --- 结束重构 ---
 
                 expandCollapseBtn.addEventListener('click', () => {
                     isAllExpanded = !isAllExpanded;
                     expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
-                    cityListContainer.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
-                    cityListContainer.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
+                    document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
+                    document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
                 });
 
-                // 【修改】为筛选器和搜索框绑定新的渲染函数
                 yearFilter.addEventListener('change', updateAndRender);
                 searchInput.addEventListener('input', updateAndRender);
 
-                // 初始加载
-                updateAndRender(); 
+                // 【修复】4. 在所有设置完成后，调用一次updateAndRender来完成初始绘制
+                updateAndRender();
             })
             .catch(error => {
                 loadingIndicator.style.display = 'none';
