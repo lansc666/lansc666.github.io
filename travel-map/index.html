@@ -23,11 +23,6 @@
     #search { flex-grow: 1; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
     #search:focus { border-color: #5cacec; box-shadow: 0 0 0 3px rgba(92, 172, 236, 0.2); outline: none; }
     #year-filter { padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; background-color: #fff; cursor: pointer; }
-    /* 【新增】模式切换按钮样式 */
-    .filter-mode-container { display: flex; align-items: center; justify-content: center; gap: 5px; }
-    .filter-mode-container label { cursor: pointer; padding: 6px 10px; font-size: 13px; border: 1px solid #ccc; border-radius: 5px; transition: all 0.2s; user-select: none; background-color: #f0f0f0; flex-grow: 1; text-align: center; }
-    .filter-mode-container input[type="radio"] { display: none; }
-    .filter-mode-container input[type="radio"]:checked + label { background-color: #5cacec; color: white; border-color: #5cacec; font-weight: 500; }
     #expandCollapseBtn { width: 100%; padding: 10px 12px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; box-sizing: border-box; }
     #expandCollapseBtn:hover { background-color: #e0e0e0; border-color: #aaa; }
     .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
@@ -46,6 +41,8 @@
     .busuanzi-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; font-size: 13px; color: #999; }
     .busuanzi-item { display: flex; align-items: center; gap: 5px; }
     .busuanzi-item .fas { color: #999; }
+    /* 【新增】统计文本样式 */
+    #stats-counter { font-weight: 500; color: #555; margin: 12px 0 !important; font-size: 14px !important; }
     .tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
     .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; }
     .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
@@ -84,13 +81,6 @@
                     <input type="text" id="search" placeholder="搜索城市...">
                     <select id="year-filter"></select>
                 </div>
-                <!-- 【新增】模式切换的HTML结构 -->
-                <div class="filter-mode-container">
-                    <input type="radio" id="mode-new" name="filter-mode" value="new" checked>
-                    <label for="mode-new">当年新增</label>
-                    <input type="radio" id="mode-cumulative" name="filter-mode" value="cumulative">
-                    <label for="mode-cumulative">累计足迹</label>
-                </div>
                 <button id="expandCollapseBtn">展开全部</button>
             </div>
             <div class="sidebar-content">
@@ -102,6 +92,8 @@
 					<div class="busuanzi-item">|</div>
 					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_page_pv">加载中...</span></div>
 				</div>
+                <!-- 【新增】全局统计 -->
+                <p id="stats-counter">统计中...</p>
                 <p>照片均为本人拍摄，版权所有©</p>
                 <p id="last-updated">最后更新于: </p>
             </div>
@@ -126,7 +118,7 @@
             const cityListContainer = document.getElementById('cityListContainer');
             const searchInput = document.getElementById('search');
             const yearFilter = document.getElementById('year-filter');
-            const modeRadios = document.querySelectorAll('input[name="filter-mode"]');
+            const statsCounter = document.getElementById('stats-counter');
             const loadingIndicator = document.querySelector('.loading-indicator');
             const resetViewBtn = document.querySelector('.reset-view-btn');
             const backToTopBtn = document.querySelector('.back-to-top');
@@ -146,6 +138,11 @@
                 loadingIndicator.style.display = 'none';
                 echarts.registerMap('china-city', geoJson);
                 originalTravelData = travelData;
+
+                // 【新增】更新全局统计
+                const cityCount = originalTravelData.length;
+                const provinceCount = new Set(originalTravelData.map(d => d.province)).size;
+                statsCounter.textContent = `已走过 ${provinceCount} 个省份 / ${cityCount} 座城市`;
 
                 const baseOption = {
                     tooltip: {
@@ -197,9 +194,13 @@
                 };
                 myChart.setOption(baseOption);
 
-                const years = new Set(travelData.map(d => d.time.substring(0, 4)).filter(year => !isNaN(year) && d.time !== "常住"));
-                const sortedYears = Array.from(years).sort((a, b) => b - a);
-                yearFilter.innerHTML = '<option value="all">显示全部</option><option value="常住">常住</option>';
+                const uniqueYears = new Set(originalTravelData.map(d => d.time.substring(0, 4)));
+                const sortedYears = Array.from(uniqueYears).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
+                
+                yearFilter.innerHTML = '<option value="all">显示全部</option>';
+                if (uniqueYears.has("常住")) {
+                     yearFilter.innerHTML += '<option value="常住">常住</option>';
+                }
                 sortedYears.forEach(year => {
                     yearFilter.innerHTML += `<option value="${year}">${year}年</option>`;
                 });
@@ -209,7 +210,6 @@
                 function updateAndRender() {
                     const selectedYear = yearFilter.value;
                     const keyword = searchInput.value.trim().toLowerCase();
-                    const selectedMode = document.querySelector('input[name="filter-mode"]:checked').value;
 
                     let filteredData = originalTravelData;
 
@@ -217,17 +217,7 @@
                         if (selectedYear === '常住') {
                             filteredData = originalTravelData.filter(d => d.time === '常住');
                         } else {
-                            if (selectedMode === 'new') {
-                                filteredData = originalTravelData.filter(d => d.time.startsWith(selectedYear));
-                            } else { // cumulative mode
-                                filteredData = originalTravelData.filter(d => {
-                                    const visitYearStr = d.time.substring(0, 4);
-                                    if (!isNaN(visitYearStr)) {
-                                        return parseInt(visitYearStr) <= parseInt(selectedYear);
-                                    }
-                                    return d.time === "常住"; // always include "常住" in cumulative
-                                });
-                            }
+                            filteredData = originalTravelData.filter(d => d.time.startsWith(selectedYear));
                         }
                     }
 
@@ -235,7 +225,7 @@
                     
                     myChart.setOption({
                         series: [{
-                            data: filteredData.map(d => ({ name: d.name, value: 1 }))
+                            data: listData.map(d => ({ name: d.name, value: 1 }))
                         }]
                     });
 
@@ -311,7 +301,6 @@
                     document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
                 });
 
-                modeRadios.forEach(radio => radio.addEventListener('change', updateAndRender));
                 yearFilter.addEventListener('change', updateAndRender);
                 searchInput.addEventListener('input', updateAndRender);
 
