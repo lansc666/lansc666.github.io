@@ -134,7 +134,6 @@
                 echarts.registerMap('china-city', geoJson);
                 originalTravelData = travelData;
 
-                // 【修复】1. 定义一个包含所有静态配置的基础Option对象
                 const baseOption = {
                     tooltip: {
                         trigger: 'item',
@@ -143,7 +142,6 @@
                         hideDelay: 200,
                         formatter: function(params) {
                             if (params.data && params.data.value === 1) {
-                                // 在原始数据中查找完整信息
                                 const info = originalTravelData.find(d => d.name === params.name);
                                 if (info) {
                                     const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
@@ -181,17 +179,14 @@
                                 borderWidth: 2
                             }
                         },
-                        // data在这里先留空，由updateAndRender函数填充
-                        data: [] 
+                        data: []
                     }]
                 };
-                
-                // 【修复】2. 先用基础配置初始化ECharts实例
                 myChart.setOption(baseOption);
 
-                const years = new Set(travelData.map(d => d.time.substring(0, 4)).filter(year => !isNaN(year)));
+                const years = new Set(travelData.map(d => d.time.substring(0, 4)).filter(year => !isNaN(year) && d.time !== "常住"));
                 const sortedYears = Array.from(years).sort((a, b) => b - a);
-                yearFilter.innerHTML = '<option value="all">全部年份</option>';
+                yearFilter.innerHTML = '<option value="all">全部年份</option><option value="常住">常住</option>';
                 sortedYears.forEach(year => {
                     yearFilter.innerHTML += `<option value="${year}">${year}年</option>`;
                 });
@@ -205,27 +200,29 @@
                     let filteredData = originalTravelData;
 
                     if (selectedYear !== 'all') {
-                        filteredData = filteredData.filter(d => d.time.startsWith(selectedYear));
+                        if (selectedYear === '常住') {
+                            filteredData = filteredData.filter(d => d.time === '常住');
+                        } else {
+                            filteredData = filteredData.filter(d => d.time.startsWith(selectedYear));
+                        }
                     }
-                    if (keyword) {
-                        filteredData = filteredData.filter(city => city.name.toLowerCase().includes(keyword));
-                    }
+
+                    const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
                     
-                    // 【修复】3. 更新地图时，只更新series中的data部分
                     myChart.setOption({
                         series: [{
                             data: filteredData.map(d => ({ name: d.name, value: 1 }))
                         }]
                     });
 
-                    renderList(filteredData);
+                    renderList(listData);
                 }
 
                 function renderList(dataToRender) {
                     cityListContainer.innerHTML = '';
                     isAllExpanded = false;
                     expandCollapseBtn.textContent = '展开全部';
-                    // ... (renderList 内部逻辑保持不变，除了接收的参数)
+                    
                     const groupedByProvince = dataToRender.reduce((acc, city) => {
                         if (!acc[city.province]) { acc[city.province] = []; }
                         acc[city.province].push(city);
@@ -245,7 +242,15 @@
 
                         provinceDiv.addEventListener('click', () => {
                             provinceDiv.classList.toggle('expanded');
-                            citySubListDiv.style.display = provinceDiv.classList.toggle('expanded') ? 'block' : 'none';
+                            citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
+                            
+                            // 【功能恢复】高亮地图上本省的所有城市
+                            myChart.dispatchAction({ type: 'downplay' });
+                            myChart.dispatchAction({
+                                type: 'highlight',
+                                seriesIndex: 0,
+                                name: cities.map(c => c.name)
+                            });
                         });
 
                         cities.forEach(city => {
@@ -266,7 +271,7 @@
                         cityListContainer.appendChild(provinceDiv);
                         cityListContainer.appendChild(citySubListDiv);
                     });
-                     if (cityListContainer.children.length === 0 && dataToRender.length === 0) {
+                     if (cityListContainer.children.length === 0) {
                         const noResultDiv = document.createElement('div');
                         noResultDiv.textContent = '未找到相关城市';
                         noResultDiv.style.textAlign = 'center';
@@ -286,7 +291,6 @@
                 yearFilter.addEventListener('change', updateAndRender);
                 searchInput.addEventListener('input', updateAndRender);
 
-                // 【修复】4. 在所有设置完成后，调用一次updateAndRender来完成初始绘制
                 updateAndRender();
             })
             .catch(error => {
