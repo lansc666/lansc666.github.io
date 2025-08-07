@@ -41,7 +41,6 @@
     .busuanzi-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; font-size: 13px; color: #999; }
     .busuanzi-item { display: flex; align-items: center; gap: 5px; }
     .busuanzi-item .fas { color: #999; }
-    /* 【新增】统计文本样式 */
     #stats-counter { font-weight: 500; color: #555; margin: 12px 0 !important; font-size: 14px !important; }
     .tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
     .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; }
@@ -92,7 +91,6 @@
 					<div class="busuanzi-item">|</div>
 					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_page_pv">加载中...</span></div>
 				</div>
-                <!-- 【新增】全局统计 -->
                 <p id="stats-counter">统计中...</p>
                 <p>照片均为本人拍摄，版权所有©</p>
                 <p id="last-updated">最后更新于: </p>
@@ -139,7 +137,6 @@
                 echarts.registerMap('china-city', geoJson);
                 originalTravelData = travelData;
 
-                // 【新增】更新全局统计
                 const cityCount = originalTravelData.length;
                 const provinceCount = new Set(originalTravelData.map(d => d.province)).size;
                 statsCounter.textContent = `已走过 ${provinceCount} 个省份 / ${cityCount} 座城市`;
@@ -193,17 +190,22 @@
                     }]
                 };
                 myChart.setOption(baseOption);
-
-                const uniqueYears = new Set(originalTravelData.map(d => d.time.substring(0, 4)));
-                const sortedYears = Array.from(uniqueYears).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
                 
-                yearFilter.innerHTML = '<option value="all">全部年份</option>';
-                if (uniqueYears.has("常住")) {
-                     yearFilter.innerHTML += '<option value="常住">常住</option>';
-                }
+                // 【已修改】使用精简版逻辑填充年份下拉菜单
+                let sortedYears = Array.from(new Set(originalTravelData.map(d => d.time.substring(0, 4))))
+                                       .filter(year => !isNaN(parseInt(year)))
+                                       .sort((a, b) => b - a);
+                
+                let optionsHtml = '<option value="all">全部年份</option>';
+
                 sortedYears.forEach(year => {
-                    yearFilter.innerHTML += `<option value="${year}">${year}年</option>`;
+                    optionsHtml += `<option value="${year}">${year}年</option>`;
+                    if (year === '2022' && new Set(originalTravelData.map(d => d.time)).has("常住")) {
+                        optionsHtml += '<option value="常住">常住</option>';
+                    }
                 });
+                
+                yearFilter.innerHTML = optionsHtml;
                 
                 resetViewBtn.addEventListener('click', () => myChart.dispatchAction({ type: 'restore' }));
 
