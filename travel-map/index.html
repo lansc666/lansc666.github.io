@@ -29,6 +29,7 @@
     .province-toggle-arrow { display: inline-block; margin-right: 8px; transition: transform 0.2s; font-size: 0.9em; color: #888; }
     .province.expanded .province-toggle-arrow { transform: rotate(90deg); }
     .city-list { margin-left: 10px; display: none; }
+	.province.expanded + .city-list { display: block; }
     .city { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; border: 1px solid #ddd; background-color: #fff; }
     .city:hover { background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec; }
     .city .city-name { font-weight: 500; color: #333; }
@@ -156,7 +157,7 @@
                                     const descriptionHtml = info.describe ? `<div class="desc">${info.describe}</div>` : '';
                                     return `<div class="tooltip-card">
                                                 <div class="city">${info.name}</div>
-                                                <div class="time">旅行时间：${info.time}</div>
+                                                <div class="time">首次访问：${info.time}</div>
                                                 ${descriptionHtml}
                                                 <img src="${info.image}" alt="${info.name}" loading="lazy" width="220" height="147">
                                             </div>`;
@@ -239,9 +240,7 @@
                             citySubListDiv.className = 'city-list';
 
                             provinceDiv.addEventListener('click', () => {
-                                const isHidden = citySubListDiv.style.display === 'none';
-                                citySubListDiv.style.display = isHidden ? 'block' : 'none';
-                                provinceDiv.classList.toggle('expanded', isHidden);
+                                provinceDiv.classList.toggle('expanded');
                                 
                                 myChart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
                                 const cityNamesInProvince = cities.map(c => c.name);
