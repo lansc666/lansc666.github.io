@@ -62,7 +62,7 @@
         z-index: 1000;
         box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
         border-radius: 16px 16px 0 0;
-        padding: 20px;
+		padding: 45px 20px 20px 20px;
         transform: translateY(110%);
         transition: transform 0.3s ease-out;
         max-height: 80vh;
@@ -290,7 +290,10 @@
                 yearFilter.innerHTML = optionsHtml;
                 
                 // (resetViewBtn事件监听器与您提供的版本完全相同)
-                resetViewBtn.addEventListener('click', () => myChart.dispatchAction({ type: 'restore' }));
+                resetViewBtn.addEventListener('click', () => {
+					myChart.dispatchAction({ type: 'restore' }));
+					updateAndRender();
+				});
 
                 // (updateAndRender函数与您提供的版本完全相同)
                 function updateAndRender() {
