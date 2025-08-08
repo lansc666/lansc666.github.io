@@ -71,21 +71,22 @@
     #mobile-tooltip-panel.active { transform: translateY(0); }
     
     .panel-header {
+		position: relative; /* 为内部的关闭按钮提供定位基准 */
+		display: flex;
+		justify-content: center; /* 让内部的城市名水平居中 */
+		align-items: center;
 		margin-bottom: 12px;
     }
     .panel-header .city {
         font-size: 20px;
 		font-weight: bold;
 		margin: 0;
-		text-align: center; /* 直接让文字居中 */
-		/* 为右上角的关闭按钮留出空间，避免文字过长时重叠 */
-		padding-right: 30px; 
-		padding-left: 30px;
     }
 	#mobile-tooltip-close {
-		position: absolute; /* 【修改】使用绝对定位 */
-		top: 15px;         /* 距离顶部15px */
-		right: 20px;       /* 距离右侧20px */
+		position: absolute;
+		top: 50%; /* 垂直居中于头部 */
+		right: 0; /* 紧贴头部右侧 */
+		transform: translateY(-50%); /* 精准垂直居中 */
 		font-size: 24px;
 		color: #aaa;
 		border: none;
