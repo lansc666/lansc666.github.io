@@ -78,6 +78,10 @@
         flex-shrink: 0;
     }
     .panel-header .city {
+		flex-grow: 1;      /* 【修复】让城市名元素占据所有剩余空间 */
+		text-align: center; /* 【修复】让其内部的文字居中 */
+		/* 为了视觉平衡，可以给关闭按钮留出一些空间 */
+		margin-right: 24px; /* 这个值约等于关闭按钮的宽度，可以微调 */
         font-size: 20px;
         font-weight: bold;
         margin: 0;
