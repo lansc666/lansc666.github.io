@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MrBlue的旅行足迹地图</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- 【新增】引入viewer.js图片查看器库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
 <style>
-    /* --- 基础样式 (与您提供的版本完全相同) --- */
+    /* --- 基础样式 (与您提供的稳定版完全相同) --- */
     body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-x: hidden; }
     .header-container { text-align: center; padding: 0 20px; margin-bottom: 25px; margin-top: 20px; }
     .header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
@@ -52,7 +51,7 @@
     .tooltip-card .desc { font-size: 14px; font-style: italic; color: #555; margin-bottom: 8px; }
     .back-to-top { position: fixed; bottom: 30px; right: 30px; width: 40px; height: 40px; background-color: rgba(0, 0, 0, 0.5); color: white; text-align: center; line-height: 40px; border-radius: 50%; text-decoration: none; font-size: 24px; display: none; z-index: 100; transition: opacity 0.3s; }
     
-    /* --- 【新增】移动端专属悬浮面板样式 --- */
+    /* --- 移动端专属悬浮面板样式 --- */
     #mobile-tooltip-panel {
         position: fixed;
         bottom: 0;
@@ -62,22 +61,23 @@
         z-index: 1000;
         box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
         border-radius: 16px 16px 0 0;
-		padding: 45px 20px 20px 20px;
+        padding: 45px 20px 20px 20px; /* 增加顶部内边距为关闭按钮留出空间 */
         transform: translateY(110%);
         transition: transform 0.3s ease-out;
         max-height: 80vh;
         overflow-y: auto;
         display: none;
+        box-sizing: border-box;
     }
     #mobile-tooltip-panel.active { transform: translateY(0); }
+    #mobile-tooltip-close { position: absolute; top: 15px; right: 20px; font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; }
     #mobile-tooltip-panel .content-wrapper { text-align: center; }
     #mobile-tooltip-panel .city { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
     #mobile-tooltip-panel .time { font-size: 14px; color: #666; margin-bottom: 12px; }
     #mobile-tooltip-panel .desc { font-size: 15px; font-style: italic; margin-bottom: 15px; }
     #mobile-tooltip-panel img { width: 100%; max-width: 400px; border-radius: 8px; margin: 10px auto 0; cursor: zoom-in; display: block; }
-    #mobile-tooltip-close { position: absolute; top: 15px; right: 15px; font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; }
-
-    /* --- 响应式布局 (与您提供的版本完全相同，仅做微调) --- */
+    
+    /* --- 响应式布局 --- */
     @media (max-width: 900px) {
         html, body { height: auto; justify-content: flex-start; }
         .header-container h1 { font-size: 1.8rem; }
@@ -96,7 +96,6 @@
         <h1>MrBlue的旅行足迹地图</h1>
         <p>点击边栏或地图上的高亮区域查看“一城一图”，支持交互式缩放和城市搜索。<br>统计范围：2022年9月-2025年7月。</p>
     </div>
-
     <div class="page-container">
         <div id="map-container">
             <div class="loading-indicator">地图加载中，请耐心等待……</div>
@@ -127,10 +126,7 @@
             </div>
         </div>
     </div>
-    
     <a href="#" class="back-to-top" title="回到顶部">↑</a>
-
-    <!-- 【新增】移动端专用的悬浮Tooltip面板 -->
     <div id="mobile-tooltip-panel">
         <button id="mobile-tooltip-close">×</button>
         <div id="mobile-tooltip-content"></div>
@@ -140,7 +136,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // (所有变量定义与您提供的版本完全相同)
             const now = new Date();
             const year = now.getFullYear();
             const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -160,7 +155,6 @@
             const backToTopBtn = document.querySelector('.back-to-top');
             const expandCollapseBtn = document.getElementById('expandCollapseBtn');
             
-            // 【新增】移动端相关变量
             const isMobile = window.matchMedia("(max-width: 900px)").matches;
             const mobileTooltipPanel = document.getElementById('mobile-tooltip-panel');
             const mobileTooltipContent = document.getElementById('mobile-tooltip-content');
@@ -169,8 +163,8 @@
 
             let isAllExpanded = false;
             let originalTravelData = [];
+            let initialZoom, initialCenter; // 【修复】用于存储初始视图状态
 
-            // (回到顶部按钮的逻辑与您提供的版本完全相同)
             window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
             backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
@@ -179,7 +173,6 @@
                 fetch(travelDataPath).then(res => res.json())
             ])
             .then(([geoJson, travelData]) => {
-                // (地图注册、统计、年份填充等所有准备逻辑与您提供的版本完全相同)
                 loadingIndicator.style.display = 'none';
                 echarts.registerMap('china-city', geoJson);
                 originalTravelData = travelData;
@@ -189,7 +182,6 @@
                 statsCounter.textContent = `已走过 ${provinceCount} 个省份 / ${cityCount} 座城市`;
 
                 const baseOption = {
-                    // 【优化】根据设备决定是否显示原生Tooltip
                     tooltip: {
                         show: !isMobile,
                         trigger: 'item',
@@ -222,7 +214,7 @@
                         type: 'map',
                         map: 'china-city',
                         roam: true,
-						selectedMode: false,
+                        selectedMode: false,
                         itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
                         emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
                         data: []
@@ -230,7 +222,6 @@
                 };
                 myChart.setOption(baseOption);
 
-                // 【新增】为桌面端Tooltip中的图片启用放大功能
                 if (!isMobile) {
                     myChart.on('showtip', function() {
                         setTimeout(() => {
@@ -243,11 +234,10 @@
                     });
                 }
                 
-                // 【优化】重构地图点击事件，处理所有交互
                 myChart.on('click', function (params) {
-                    if (params.seriesName) { // 点击的是城市
+                    if (params.seriesName) {
                         if (isMobile) {
-                            myChart.dispatchAction({ type: 'hideTip' }); // 先隐藏可能存在的原生tip
+                            myChart.dispatchAction({ type: 'hideTip' });
                             const info = originalTravelData.find(d => d.name === params.name);
                             if (info) {
                                 const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
@@ -265,7 +255,7 @@
                                 }
                             }
                         }
-                    } else { // 点击的是地图空白处
+                    } else {
                         if (isMobile) {
                             mobileTooltipPanel.classList.remove('active');
                         }
@@ -273,12 +263,10 @@
                     }
                 });
 
-                // 【新增】移动端面板的关闭按钮事件
                 mobileTooltipCloseBtn.addEventListener('click', () => {
                     mobileTooltipPanel.classList.remove('active');
                 });
-
-                // (年份下拉菜单填充逻辑与您提供的版本完全相同)
+                
                 let sortedYears = Array.from(new Set(originalTravelData.map(d => d.time.substring(0, 4)))).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
                 let optionsHtml = '<option value="all">全部年份</option>';
                 sortedYears.forEach(year => {
@@ -289,13 +277,16 @@
                 });
                 yearFilter.innerHTML = optionsHtml;
                 
-                // (resetViewBtn事件监听器与您提供的版本完全相同)
+                // 【修复】重置按钮的事件监听器
                 resetViewBtn.addEventListener('click', () => {
-					myChart.dispatchAction({ type: 'restore' }));
-					updateAndRender();
-				});
+                    myChart.setOption({
+                        series: [{
+                            zoom: initialZoom,
+                            center: initialCenter
+                        }]
+                    });
+                });
 
-                // (updateAndRender函数与您提供的版本完全相同)
                 function updateAndRender() {
                     const selectedYear = yearFilter.value;
                     const keyword = searchInput.value.trim().toLowerCase();
@@ -312,7 +303,6 @@
                     renderList(listData);
                 }
 
-                // (renderList函数与您提供的版本完全相同)
                 function renderList(dataToRender) {
                     cityListContainer.innerHTML = '';
                     isAllExpanded = false;
@@ -343,8 +333,7 @@
                             cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
                             cityDiv.addEventListener('click', (e) => {
                                 e.stopPropagation();
-                                // 【优化】移动端点击列表项也弹出悬浮面板
-                                myChart.dispatchAction({ type: 'click', seriesIndex: 0, name: city.name, from: 'sidebar' });
+                                myChart.dispatchAction({ type: 'click', seriesIndex: 0, name: city.name });
                                 if (!isMobile) {
                                     myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
                                 }
@@ -359,7 +348,6 @@
                     }
                 }
 
-                // (所有事件监听器与您提供的版本完全相同)
                 expandCollapseBtn.addEventListener('click', () => {
                     isAllExpanded = !isAllExpanded;
                     expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
@@ -368,7 +356,13 @@
                 });
                 yearFilter.addEventListener('change', updateAndRender);
                 searchInput.addEventListener('input', updateAndRender);
-                updateAndRender();
+                
+                updateAndRender(); // 初始渲染
+
+                // 【修复】在首次渲染后，存储初始视图状态
+                const initialOption = myChart.getOption();
+                initialZoom = initialOption.series[0].zoom;
+                initialCenter = initialOption.series[0].center;
             })
             .catch(error => {
                 loadingIndicator.style.display = 'none';
