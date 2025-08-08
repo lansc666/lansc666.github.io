@@ -53,7 +53,7 @@
     
     /* --- 【最终优化】移动端专属悬浮面板样式 --- */
     #mobile-tooltip-panel {
-        position: relative;
+        position: fixed;
         bottom: 0; left: 0; right: 0;
         background: #fff;
         z-index: 1000;
@@ -71,18 +71,16 @@
     #mobile-tooltip-panel.active { transform: translateY(0); }
     
     .panel-header {
-		position: absolute;   /* 【修改】使用绝对定位 */
-		top: 20px;            /* 距离顶部20px */
-		left: 50%;            /* 先移动到中心线 */
-		transform: translateX(-50%); /* 再向左移动自身宽度的一半，实现完美居中 */
-		width: auto;          /* 宽度由内容决定 */
-		text-align: center;
+		margin-bottom: 12px;
     }
     .panel-header .city {
         font-size: 20px;
-        font-weight: bold;
-        margin: 0;
-        text-align: left;
+		font-weight: bold;
+		margin: 0;
+		text-align: center; /* 直接让文字居中 */
+		/* 为右上角的关闭按钮留出空间，避免文字过长时重叠 */
+		padding-right: 30px; 
+		padding-left: 30px;
     }
 	#mobile-tooltip-close {
 		position: absolute; /* 【修改】使用绝对定位 */
