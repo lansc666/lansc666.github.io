@@ -76,6 +76,7 @@
     #mobile-tooltip-panel .time { font-size: 14px; color: #666; margin-bottom: 12px; }
     #mobile-tooltip-panel .desc { font-size: 15px; font-style: italic; margin-bottom: 15px; }
     #mobile-tooltip-panel img { width: 100%; max-width: 400px; border-radius: 8px; margin: 10px auto 0; cursor: zoom-in; display: block; }
+	#mobile-tooltip-content { text-align: center; }
     
     /* --- 响应式布局 --- */
     @media (max-width: 900px) {
@@ -242,12 +243,12 @@
                             if (info) {
                                 const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
                                 const imageHtml = info.image && info.image !== "N/A" ? `<div class="image-container"><img src="${info.image}" alt="${info.name}"></div>` : '';
-                                mobileTooltipContent.innerHTML = `<div class="content-wrapper">
-                                                                    <div class="city">${info.name}</div>
-                                                                    <div class="time">首次访问：${info.time}</div>
-                                                                    ${descriptionHtml}
-                                                                    ${imageHtml}
-                                                                </div>`;
+                                mobileTooltipContent.innerHTML = `
+                                    <div class="city">${info.name}</div>
+									<div class="time">首次访问：${info.time}</div>
+									${descriptionHtml}
+									${imageHtml}
+								`;
                                 mobileTooltipPanel.classList.add('active');
                                 if (imageHtml) {
                                     if (imageViewer) imageViewer.destroy();
