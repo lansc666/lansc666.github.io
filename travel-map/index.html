@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MrBlue的旅行足迹地图</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- 【新增】引入viewer.js图片查看器库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
 <style>
-    /* --- 桌面端基础样式 --- */
-    body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; overflow: hidden; /* 桌面端防止页面滚动 */ }
+    /* --- 基础样式 --- */
+    body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; overflow: hidden; }
     .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; }
     .header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
     .header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
     .page-container { display: flex; width: 90%; max-width: 1400px; flex-grow: 1; min-height: 0; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-    #map-container { position: relative; flex: 3; height: 100%; min-width: 0; }
+    #map-container { position: relative; flex: 3; height: 100%; min-width: 0; touch-action: none; /* 【新增】禁止浏览器处理地图区域的触摸手势 */ }
     #chinaMap { width: 100%; height: 100%; }
     .loading-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.8); color: #888; font-size: 16px; z-index: 10; }
     .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #333; opacity: 0.5; z-index: 5; pointer-events: none; }
@@ -36,32 +38,42 @@
     .busuanzi-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; font-size: 13px; color: #999; }
     .busuanzi-item { display: flex; align-items: center; gap: 5px; }
     .tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
-    .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; }
+    .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; cursor: zoom-in; /* 提示图片可点击 */ }
     .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; }
     .tooltip-card .time { font-size: 13px; color: #666; }
     .tooltip-card .desc { font-size: 14px; font-style: italic; color: #555; }
-    
-    /* --- 移动端专属样式 --- */
-    .mobile-view-switcher { display: none; } /* 默认隐藏 */
+
+    /* --- 【新增】移动端专属悬浮面板样式 --- */
+    #mobile-tooltip-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        z-index: 1000;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
+        border-radius: 16px 16px 0 0;
+        padding: 20px;
+        transform: translateY(110%);
+        transition: transform 0.3s ease-out;
+        max-height: 80vh;
+        overflow-y: auto;
+        display: none;
+    }
+    #mobile-tooltip-panel.active { transform: translateY(0); }
+    #mobile-tooltip-panel .content-wrapper { text-align: center; }
+    #mobile-tooltip-panel .city { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
+    #mobile-tooltip-panel .time { font-size: 14px; color: #666; margin-bottom: 12px; }
+    #mobile-tooltip-panel .desc { font-size: 15px; font-style: italic; margin-bottom: 15px; }
+    #mobile-tooltip-panel img { width: 100%; max-width: 400px; border-radius: 8px; margin-top: 10px; cursor: zoom-in; }
+    #mobile-tooltip-close { position: absolute; top: 15px; right: 15px; font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; }
 
     @media (max-width: 900px) {
-        body, html { justify-content: flex-start; overflow-y: hidden; } /* 恢复布局并再次禁止滚动 */
-        .header-container { padding-bottom: 15px; }
-        .header-container h1 { font-size: 1.8rem; }
-        
-        .page-container { flex-direction: column; width: 100%; height: auto; flex-grow: 1; border-radius: 0; box-shadow: none; margin-bottom: 0; }
-        
-        /* 标签页切换器 */
-        .mobile-view-switcher { display: flex; padding: 10px; background-color: #f4f7f9; flex-shrink: 0; }
-        .mobile-view-switcher button { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; background-color: #fff; color: #333; cursor: pointer; transition: all 0.2s; }
-        .mobile-view-switcher button.active { background-color: #5cacec; color: white; border-color: #5cacec; font-weight: bold; }
-        .mobile-view-switcher button:first-child { border-radius: 5px 0 0 5px; }
-        .mobile-view-switcher button:last-child { border-radius: 0 5px 5px 0; border-left: none; }
-
-        /* 标签页内容面板 */
-        #map-container { display: none; flex-grow: 1; }
-        #sidebar { display: none; border-left: none; min-width: 100%; }
-        .view-panel.active { display: flex !important; flex-grow: 1; flex-direction: column; }
+        body, html { overflow: auto; }
+        .page-container { flex-direction: column; width: 100%; height: auto; border-radius: 0; box-shadow: none; margin-bottom: 0; }
+        #map-container { height: 60vh; flex: none; }
+        #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
+        #mobile-tooltip-panel { display: block; }
     }
 </style>
 </head>
@@ -71,19 +83,14 @@
         <p>点击边栏或地图上的高亮区域查看“一城一图”，支持交互式缩放和城市搜索。<br>统计范围：2022年9月-2025年7月。</p>
     </div>
 
-    <div class="mobile-view-switcher">
-        <button id="map-view-btn" class="active">地图视图</button>
-        <button id="list-view-btn">列表视图</button>
-    </div>
-
     <div class="page-container">
-        <div id="map-container" class="view-panel active">
+        <div id="map-container">
             <div class="loading-indicator">地图加载中...</div>
             <div id="chinaMap"></div>
             <div class="map-approval-number">GS(2024)0650</div>
             <span class="reset-view-btn" title="重置视图">⟲</span>
         </div>
-        <div id="sidebar" class="view-panel">
+        <div id="sidebar">
             <div id="search-container">
                 <div class="filter-controls">
                     <input type="text" id="search" placeholder="搜索城市...">
@@ -107,7 +114,13 @@
         </div>
     </div>
     
+    <div id="mobile-tooltip-panel">
+        <button id="mobile-tooltip-close">×</button>
+        <div id="mobile-tooltip-content"></div>
+    </div>
+
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const now = new Date();
@@ -122,10 +135,6 @@
             const myChart = echarts.init(document.getElementById('chinaMap'));
             const isMobile = window.matchMedia("(max-width: 900px)").matches;
             
-            const mapViewBtn = document.getElementById('map-view-btn');
-            const listViewBtn = document.getElementById('list-view-btn');
-            const mapContainer = document.getElementById('map-container');
-            const sidebar = document.getElementById('sidebar');
             const cityListContainer = document.getElementById('cityListContainer');
             const searchInput = document.getElementById('search');
             const yearFilter = document.getElementById('year-filter');
@@ -133,24 +142,12 @@
             const loadingIndicator = document.querySelector('.loading-indicator');
             const resetViewBtn = document.querySelector('.reset-view-btn');
             const expandCollapseBtn = document.getElementById('expandCollapseBtn');
+            const mobileTooltipPanel = document.getElementById('mobile-tooltip-panel');
+            const mobileTooltipContent = document.getElementById('mobile-tooltip-content');
+            const mobileTooltipCloseBtn = document.getElementById('mobile-tooltip-close');
+            let imageViewer = null;
 
             let originalTravelData = [];
-
-            if (isMobile) {
-                mapViewBtn.addEventListener('click', () => {
-                    mapViewBtn.classList.add('active');
-                    listViewBtn.classList.remove('active');
-                    mapContainer.classList.add('active');
-                    sidebar.classList.remove('active');
-                    myChart.resize(); // 切换时重置图表尺寸
-                });
-                listViewBtn.addEventListener('click', () => {
-                    listViewBtn.classList.add('active');
-                    mapViewBtn.classList.remove('active');
-                    sidebar.classList.add('active');
-                    mapContainer.classList.remove('active');
-                });
-            }
 
             Promise.all([
                 fetch(geoJsonPath).then(res => res.json()),
@@ -167,6 +164,7 @@
 
                 const baseOption = {
                     tooltip: {
+                        show: !isMobile,
                         trigger: 'item',
                         confine: true,
                         enterable: true,
@@ -176,12 +174,12 @@
                                 const info = originalTravelData.find(d => d.name === params.name);
                                 if (info) {
                                     const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
-                                    const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy" width="220" height="147">` : '';
+                                    const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}">` : '';
                                     return `<div class="tooltip-card">
                                                 <div class="city">${info.name}</div>
                                                 <div class="time">首次访问：${info.time}</div>
                                                 ${descriptionHtml}
-                                                ${imageHtml}
+                                                <div class="image-container">${imageHtml}</div>
                                             </div>`;
                                 }
                             }
@@ -199,11 +197,49 @@
                     }]
                 };
                 myChart.setOption(baseOption);
+                
+                myChart.on('showtip', function() {
+                    setTimeout(() => {
+                        const container = document.querySelector('.tooltip-card .image-container');
+                        if (container && container.querySelector('img')) {
+                           if (imageViewer) imageViewer.destroy();
+                           imageViewer = new Viewer(container);
+                        }
+                    }, 100);
+                });
 
                 myChart.on('click', function (params) {
-                    if (!params.seriesName) {
-                        myChart.dispatchAction({ type: 'hideTip' });
+                    if (params.seriesName) {
+                        if (isMobile) {
+                            const info = originalTravelData.find(d => d.name === params.name);
+                            if (info) {
+                                const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
+                                const imageHtml = info.image && info.image !== "N/A" ? `<div class="image-container"><img src="${info.image}" alt="${info.name}"></div>` : '';
+                                mobileTooltipContent.innerHTML = `
+                                    <div class="content-wrapper">
+                                        <div class="city">${info.name}</div>
+                                        <div class="time">首次访问：${info.time}</div>
+                                        ${descriptionHtml}
+                                        ${imageHtml}
+                                    </div>`;
+                                mobileTooltipPanel.classList.add('active');
+                                if (imageHtml) {
+                                    if (imageViewer) imageViewer.destroy();
+                                    imageViewer = new Viewer(mobileTooltipContent.querySelector('.image-container'));
+                                }
+                            }
+                        }
+                    } else {
+                        if (isMobile) {
+                            mobileTooltipPanel.classList.remove('active');
+                        } else {
+                            myChart.dispatchAction({ type: 'hideTip' });
+                        }
                     }
+                });
+
+                mobileTooltipCloseBtn.addEventListener('click', () => {
+                    mobileTooltipPanel.classList.remove('active');
                 });
                 
                 let sortedYears = Array.from(new Set(originalTravelData.map(d => d.time.substring(0, 4))))
@@ -211,14 +247,12 @@
                                        .sort((a, b) => b - a);
                 
                 let optionsHtml = '<option value="all">全部年份</option>';
-
                 sortedYears.forEach(year => {
                     optionsHtml += `<option value="${year}">${year}年</option>`;
                     if (year === '2022' && new Set(originalTravelData.map(d => d.time)).has("常住")) {
                         optionsHtml += '<option value="常住">常住</option>';
                     }
                 });
-                
                 yearFilter.innerHTML = optionsHtml;
                 
                 resetViewBtn.addEventListener('click', () => myChart.dispatchAction({ type: 'restore' }));
@@ -226,17 +260,13 @@
                 function updateAndRender() {
                     const selectedYear = yearFilter.value;
                     const keyword = searchInput.value.trim().toLowerCase();
-
                     let filteredData = originalTravelData;
-
                     if (selectedYear !== 'all') {
                         filteredData = (selectedYear === '常住') ? 
                             originalTravelData.filter(d => d.time === '常住') : 
                             originalTravelData.filter(d => d.time.startsWith(selectedYear));
                     }
-
                     const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
-                    
                     myChart.setOption({ series: [{ data: listData.map(d => ({ name: d.name, value: 1 })) }] });
                     renderList(listData);
                 }
@@ -244,45 +274,36 @@
                 function renderList(dataToRender) {
                     cityListContainer.innerHTML = '';
                     expandCollapseBtn.textContent = '展开全部';
-                    
                     const groupedByProvince = dataToRender.reduce((acc, city) => {
                         (acc[city.province] = acc[city.province] || []).push(city);
                         return acc;
                     }, {});
-
                     const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => groupedByProvince[b].length - groupedByProvince[a].length);
-
                     sortedProvinces.forEach(province => {
                         const cities = groupedByProvince[province];
                         const provinceDiv = document.createElement('div');
                         provinceDiv.className = 'province';
                         provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
-                        
                         const citySubListDiv = document.createElement('div');
                         citySubListDiv.className = 'city-list';
-
                         provinceDiv.addEventListener('click', () => {
                             provinceDiv.classList.toggle('expanded');
                             citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
                             myChart.dispatchAction({ type: 'downplay' });
                             myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: cities.map(c => c.name) });
                         });
-
                         cities.forEach(city => {
                             const cityDiv = document.createElement('div');
                             cityDiv.className = 'city';
                             cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
-                            
                             cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
                             cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
                             cityDiv.addEventListener('click', (e) => {
                                 e.stopPropagation();
-                                myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
+                                myChart.dispatchAction({ type: 'click', seriesIndex: 0, name: city.name });
                             });
-                            
                             citySubListDiv.appendChild(cityDiv);
                         });
-
                         cityListContainer.appendChild(provinceDiv);
                         cityListContainer.appendChild(citySubListDiv);
                     });
@@ -300,7 +321,6 @@
 
                 yearFilter.addEventListener('change', updateAndRender);
                 searchInput.addEventListener('input', updateAndRender);
-
                 updateAndRender();
             })
             .catch(error => {
@@ -309,12 +329,8 @@
                 console.error("加载地图或旅行数据失败:", error);
             });
 
-            window.addEventListener('resize', () => {
-                myChart.resize();
-            });
+            window.addEventListener('resize', () => myChart.resize());
         });
     </script>
-    
-    <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
 </body>
-</html>
+</html>```
