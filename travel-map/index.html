@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
 <style>
-    /* --- 基础样式 (与您提供的稳定版完全相同) --- */
+    /* --- 基础样式 --- */
     body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-x: hidden; }
     .header-container { text-align: center; padding: 0 20px; margin-bottom: 25px; margin-top: 20px; }
     .header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
     .header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
     .page-container { display: flex; width: 90%; max-width: 1400px; height: 80vh; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
-    #map-container { position: relative; flex: 3; height: 100%; min-width: 0; touch-action: none; /* 【优化】禁止浏览器处理地图区域的触摸手势 */ }
+    #map-container { position: relative; flex: 3; height: 100%; min-width: 0; touch-action: none; }
     #chinaMap { width: 100%; height: 100%; }
     .loading-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.8); color: #888; font-size: 16px; z-index: 10; transition: opacity 0.3s; }
     .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #333; opacity: 0.5; z-index: 10; pointer-events: none; }
@@ -45,38 +45,75 @@
     .busuanzi-item .fas { color: #999; }
     #stats-counter { font-weight: 500; color: #555; margin: 12px 0 !important; font-size: 14px !important; }
     .tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
-    .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; cursor: zoom-in; }
+    .tooltip-card img { width: 100%; height: 147px; object-fit: cover; border-radius: 4px; margin-top: 8px; background-color: #eee; cursor: zoom-in; }
     .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
     .tooltip-card .time { font-size: 13px; color: #666; margin-bottom: 8px; }
     .tooltip-card .desc { font-size: 14px; font-style: italic; color: #555; margin-bottom: 8px; }
     .back-to-top { position: fixed; bottom: 30px; right: 30px; width: 40px; height: 40px; background-color: rgba(0, 0, 0, 0.5); color: white; text-align: center; line-height: 40px; border-radius: 50%; text-decoration: none; font-size: 24px; display: none; z-index: 100; transition: opacity 0.3s; }
     
-    /* --- 移动端专属悬浮面板样式 --- */
+    /* --- 【最终优化】移动端专属悬浮面板样式 --- */
     #mobile-tooltip-panel {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        bottom: 0; left: 0; right: 0;
         background: #fff;
         z-index: 1000;
         box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
         border-radius: 16px 16px 0 0;
-        padding: 20px
+        padding: 20px;
         transform: translateY(110%);
         transition: transform 0.3s ease-out;
-        max-height: 80vh;
-        overflow-y: auto;
+        max-height: 85vh;
         display: none;
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
     }
     #mobile-tooltip-panel.active { transform: translateY(0); }
-    #mobile-tooltip-close { position: absolute; top: 15px; right: 20px; font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; }
-    #mobile-tooltip-panel .content-wrapper { text-align: center; }
-    #mobile-tooltip-panel .city { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
-    #mobile-tooltip-panel .time { font-size: 14px; color: #666; margin-bottom: 12px; }
-    #mobile-tooltip-panel .desc { font-size: 15px; font-style: italic; margin-bottom: 15px; }
-    #mobile-tooltip-panel img { width: 100%; max-width: 400px; border-radius: 8px; margin: 10px auto 0; cursor: zoom-in; display: block; }
-	#mobile-tooltip-content { text-align: center; }
+    
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-shrink: 0;
+    }
+    .panel-header .city {
+        font-size: 20px;
+        font-weight: bold;
+        margin: 0;
+        text-align: left;
+    }
+    #mobile-tooltip-close {
+        font-size: 24px;
+        color: #aaa;
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 5px;
+    }
+    
+    .panel-body {
+        overflow-y: auto;
+        text-align: center;
+    }
+    .panel-body .time { font-size: 14px; color: #666; margin-bottom: 12px; }
+    .panel-body .desc { font-size: 15px; font-style: italic; margin-bottom: 15px; text-align: left; }
+    
+    .panel-image-container {
+        width: 100%;
+        max-height: 45vh;
+        overflow-y: auto;
+        border-radius: 8px;
+        margin-top: 10px;
+        background-color: #f0f0f0;
+        -webkit-overflow-scrolling: touch;
+    }
+    .panel-image-container img {
+        width: 100%;
+        height: auto;
+        display: block;
+        cursor: zoom-in;
+    }
     
     /* --- 响应式布局 --- */
     @media (max-width: 900px) {
@@ -88,7 +125,7 @@
         body .sidebar-content { overflow-y: visible; }
         .back-to-top { bottom: 20px; right: 20px; }
         .reset-view-btn { width: 28px; height: 28px; font-size: 18px; }
-        #mobile-tooltip-panel { display: block; }
+        #mobile-tooltip-panel { display: flex; }
     }
 </style>
 </head>
@@ -129,8 +166,11 @@
     </div>
     <a href="#" class="back-to-top" title="回到顶部">↑</a>
     <div id="mobile-tooltip-panel">
-        <button id="mobile-tooltip-close">×</button>
-        <div id="mobile-tooltip-content"></div>
+        <div class="panel-header">
+            <h3 class="city" id="mobile-tooltip-city"></h3>
+            <button id="mobile-tooltip-close">×</button>
+        </div>
+        <div class="panel-body" id="mobile-tooltip-body"></div>
     </div>
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
@@ -158,13 +198,14 @@
             
             const isMobile = window.matchMedia("(max-width: 900px)").matches;
             const mobileTooltipPanel = document.getElementById('mobile-tooltip-panel');
-            const mobileTooltipContent = document.getElementById('mobile-tooltip-content');
+            const mobileTooltipCity = document.getElementById('mobile-tooltip-city');
+            const mobileTooltipBody = document.getElementById('mobile-tooltip-body');
             const mobileTooltipCloseBtn = document.getElementById('mobile-tooltip-close');
             let imageViewer = null;
 
             let isAllExpanded = false;
             let originalTravelData = [];
-            let initialZoom, initialCenter; // 【修复】用于存储初始视图状态
+            let initialZoom, initialCenter;
 
             window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
             backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
@@ -241,18 +282,18 @@
                             myChart.dispatchAction({ type: 'hideTip' });
                             const info = originalTravelData.find(d => d.name === params.name);
                             if (info) {
+                                mobileTooltipCity.textContent = info.name;
                                 const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
-                                const imageHtml = info.image && info.image !== "N/A" ? `<div class="image-container"><img src="${info.image}" alt="${info.name}"></div>` : '';
-                                mobileTooltipContent.innerHTML = `
-                                    <div class="city">${info.name}</div>
-									<div class="time">首次访问：${info.time}</div>
-									${descriptionHtml}
-									${imageHtml}
-								`;
+                                const imageHtml = info.image && info.image !== "N/A" ? `<div class="panel-image-container"><img src="${info.image}" alt="${info.name}"></div>` : '';
+                                mobileTooltipBody.innerHTML = `
+                                    <div class="time">首次访问：${info.time}</div>
+                                    ${descriptionHtml}
+                                    ${imageHtml}
+                                `;
                                 mobileTooltipPanel.classList.add('active');
                                 if (imageHtml) {
                                     if (imageViewer) imageViewer.destroy();
-                                    imageViewer = new Viewer(mobileTooltipContent.querySelector('.image-container'));
+                                    imageViewer = new Viewer(mobileTooltipBody.querySelector('.panel-image-container img'));
                                 }
                             }
                         }
@@ -278,7 +319,6 @@
                 });
                 yearFilter.innerHTML = optionsHtml;
                 
-                // 【修复】重置按钮的事件监听器
                 resetViewBtn.addEventListener('click', () => {
                     myChart.setOption({
                         series: [{
@@ -358,9 +398,8 @@
                 yearFilter.addEventListener('change', updateAndRender);
                 searchInput.addEventListener('input', updateAndRender);
                 
-                updateAndRender(); // 初始渲染
+                updateAndRender();
 
-                // 【修复】在首次渲染后，存储初始视图状态
                 const initialOption = myChart.getOption();
                 initialZoom = initialOption.series[0].zoom;
                 initialCenter = initialOption.series[0].center;
