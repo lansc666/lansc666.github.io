@@ -283,7 +283,7 @@
                 }
                 
                 myChart.on('click', function (params) {
-                    if (params.seriesName) {
+                    if (params && params.name) {
                         if (isMobile) {
                             myChart.dispatchAction({ type: 'hideTip' });
                             const info = originalTravelData.find(d => d.name === params.name);
