@@ -168,7 +168,7 @@
 				</div>
 				<p id="stats-counter">统计中...</p>
 				<p>照片均为本人拍摄，版权所有©</p>
-				<p id="last-updated">最后更新于: </p>
+				<p id="last-updated">最后更新于: <%= date(page.date, 'YYYY年MM月DD日') %></p>
 				<p><a href="https://mrbluegeo.xyz">返回网站主页</a></p>
 			</div>
 		</div>
@@ -186,12 +186,6 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
-			const now = new Date();
-			const year = now.getFullYear();
-			const month = (now.getMonth() + 1).toString().padStart(2, '0');
-			const day = now.getDate().toString().padStart(2, '0');
-			document.getElementById('last-updated').textContent += `${year}年${month}月${day}日`;
-
 			const geoJsonPath = "/travel-map/city_merged.geojson";
 			const travelDataPath = "/travel-map/travelData.json";
 			
@@ -435,6 +429,6 @@
 		});
 	</script>
 	
-	<script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
+	<script async defer src="https://api.busuanzi.cc/static/3.6.9/busuanzi.min.js"></script>
 </body>
 </html>
