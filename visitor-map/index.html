@@ -6,18 +6,8 @@
     <title>点亮你的中国足迹地图</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-    /* --- 全局与布局样式 (恢复到适合独立页面的版本) --- */
-    body, html { 
-        margin: 0; 
-        padding: 0; 
-        height: 100vh; /* 必须占满整个视口高度 */
-        width: 100%; 
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
-        background-color: #f4f7f9; 
-        display: flex; 
-        flex-direction: column;
-        overflow: hidden; /* 在独立页面模式下，我们需要这个来防止不必要的滚动 */
-    }
+    /* --- 全局与布局样式 --- */
+    body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; overflow: hidden; /* 在桌面端保持页面不滚动 */ }
     
     .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
@@ -78,7 +68,9 @@
         .page-container { flex-direction: column; }
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
-        body, html { overflow: auto; } /* 在手机端允许页面滚动 */
+        
+        /* [CSS 修正点] 仅在移动端启用页面的垂直滚动 */
+        body, html { overflow: auto; } 
     }
 </style>
 </head>
@@ -129,14 +121,10 @@
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // [重要] 恢复为您环境中有效的路径。
-            // 既然这个路径在您最初的代码中有效，那么它就是正确的路径。
+            // 这个路径在您最初的环境中是有效的，我们保持不变。
+            // 如果地图依然加载失败，请按F12检查“网络”面板，确认此文件是否404。
             const GEOJSON_URL = "/visitor-map/city_merged.geojson";
             const CITYLIST_URL = "/visitor-map/citylist.json";
-
-            // [重要] 恢复使用 'china' 作为地图名称
-            // 因为您的 GeoJSON 文件没有南海诸岛，只要这个文件能成功加载，就不会显示南海诸岛。
-            const MAP_NAME = 'china';
 
             const domMap = document.getElementById('chinaMap');
             const domList = document.getElementById('listContent');
@@ -156,7 +144,6 @@
             let expandedProvinces = new Set();
             let initialOption = {};
 
-            // [重要] 采用修复后的、健壮的异步加载逻辑
             Promise.all([
                 fetch(GEOJSON_URL).then(r => { if(!r.ok) throw new Error("GeoJSON加载失败"); return r.json(); }),
                 fetch(CITYLIST_URL).then(r => { if(!r.ok) throw new Error("CityList加载失败"); return r.json(); })
@@ -164,9 +151,9 @@
                 domLoading.style.display = 'none';
                 
                 processData(cityList);
-                echarts.registerMap(MAP_NAME, geoJson);
+                echarts.registerMap('china', geoJson);
                 
-                // 确保在数据加载和地图注册完成后，才进行初始化
+                // [JS 修正点] 核心修正：确保所有初始化操作都在数据加载成功之后执行
                 loadStorage();
                 initMap();
                 updateUI();
@@ -195,7 +182,7 @@
                 const option = {
                     tooltip: { trigger: 'item', formatter: '{b}' },
                     geo: {
-                        map: MAP_NAME, // 使用我们自己的地图
+                        map: 'china',
                         roam: true,
                         label: { show: false },
                         layoutCenter: ['50%', '52%'],
@@ -243,7 +230,7 @@
                     const allCitiesInThisProvince = provinceMap[prov];
                     const selectedCount = allCitiesInThisProvince.filter(c => selectedCities.has(c)).length;
                     
-                    const isExpanded = expandedProvinces.has(prov) || !!keyword; // 使用 !!keyword 转换为布尔值
+                    const isExpanded = expandedProvinces.has(prov) || keyword;
                     const wrapper = document.createElement('div');
                     wrapper.className = `province-item ${isExpanded ? 'expanded' : ''}`;
 
@@ -326,6 +313,8 @@
                 const saved = localStorage.getItem('my_footprints');
                 if (saved) { try { selectedCities = new Set(JSON.parse(saved)); } catch(e) { console.error('Storage Error', e); } }
             }
+            
+            // 删除了原始代码中在 Promise 外面的错误调用
         });
     </script>
     <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
