@@ -147,19 +147,18 @@
             let isAllExpanded = false;
             let initialOption = {};
 
-            // --- 1. 数据加载与初始化 ---
             Promise.all([
-                fetch(GEOJSON_URL).then(r => { if(!r.ok) throw new Error("GeoJSON加载失败"); return r.json(); }),
-                fetch(CITYLIST_URL).then(r => { if(!r.ok) throw new Error("CityList加载失败"); return r.json(); })
+                fetch(GEOJSON_URL).then(r => { if(!r.ok) throw new Error(`GeoJSON加载失败: ${GEOJSON_URL}`); return r.json(); }),
+                fetch(CITYLIST_URL).then(r => { if(!r.ok) throw new Error(`CityList加载失败: ${CITYLIST_URL}`); return r.json(); })
             ]).then(([geoJson, cityList]) => {
                 domLoading.style.display = 'none';
 
                 processData(cityList);
-                echarts.registerMap('china', geoJson);
                 
-                // 【最终修复】在所有数据准备好之后，渲染之前，加载本地存储
-                loadStorage(); 
+                // 【最终修复】使用唯一的、自定义的名称来注册地图
+                echarts.registerMap('my_china_map', geoJson);
                 
+                loadStorage();
                 initMap();
                 renderSidebar();
                 updateStats();
@@ -170,7 +169,6 @@
                 console.error("Init Error:", err);
             });
 
-            // --- 2. 数据处理逻辑 ---
             function processData(list) {
                 list.forEach(item => {
                     const city = item["地名"];
@@ -185,18 +183,23 @@
                 });
             }
 
-            // --- 3. 地图逻辑 ---
             function initMap() {
                 const option = {
                     tooltip: { trigger: 'item', formatter: '{b}' },
                     geo: {
-                        map: 'china',
+                        // 【最终修复】确保使用的是我们自己注册的地图
+                        map: 'my_china_map',
                         roam: true,
                         label: { show: false },
-                        layoutCenter: ['50%', '52%'],
-                        layoutSize: '105%',
-                        itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-                        emphasis: { itemStyle: { areaColor: '#E58B47' }, label: { show: false } },
+                        itemStyle: {
+                            areaColor: '#e9f1f6',
+                            borderColor: '#b9d4e9',
+                            borderWidth: 1
+                        },
+                        emphasis: {
+                            itemStyle: { areaColor: '#E58B47' },
+                            label: { show: false }
+                        },
                         select: { disabled: true },
                         regions: [] 
                     },
@@ -222,7 +225,6 @@
                 myChart.setOption({ geo: { regions: regions } });
             }
 
-            // --- 4. 侧边栏渲染逻辑 ---
             function renderSidebar() {
                 domList.innerHTML = '';
                 const keyword = domSearch.value.trim();
@@ -293,7 +295,6 @@
                 }
             }
 
-            // --- 5. 交互逻辑 ---
             function toggleCity(city) {
                 if (selectedCities.has(city)) selectedCities.delete(city);
                 else selectedCities.add(city);
@@ -350,7 +351,6 @@
 
             window.addEventListener('resize', () => myChart.resize());
 
-            // --- 6. 存储逻辑 ---
             function saveStorage() {
                 localStorage.setItem('my_footprints', JSON.stringify(Array.from(selectedCities)));
             }
