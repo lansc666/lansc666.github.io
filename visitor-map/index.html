@@ -7,70 +7,295 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
     /* --- 全局与布局样式 --- */
-    body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; overflow: hidden; /* 在桌面端保持页面不滚动 */ }
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        width: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #f4f7f9;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
     
-    .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
-    .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
-    .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
+    .header-container {
+        text-align: center;
+        padding: 15px 20px;
+        flex-shrink: 0;
+        background: #fff;
+        border-bottom: 1px solid #eee;
+    }
+    .header-container h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    .header-container p {
+        margin: 5px 0 0;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
 
-    .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
+    .page-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
     
-    #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
-    #chinaMap { width: 100%; height: 100%; }
+    #map-container {
+        position: relative;
+        flex: 1;
+        height: 100%;
+        min-width: 0;
+        background-color: #f4f7f9;
+        touch-action: none;
+    }
+    #chinaMap {
+        width: 100%;
+        height: 100%;
+    }
     
-    .loading-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; pointer-events: none; }
-    .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #999; z-index: 10; pointer-events: none; }
-    .reset-view-btn { position: absolute; bottom: 20px; right: 20px; width: 36px; height: 36px; background: #fff; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .loading-indicator {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        pointer-events: none;
+    }
+    .map-approval-number {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-size: 12px;
+        color: #999;
+        z-index: 10;
+        pointer-events: none;
+    }
+    .reset-view-btn {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: 36px;
+        height: 36px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+        color: #333;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
     
-    #sidebar { width: 350px; background: #fff; border-left: 1px solid #ddd; display: flex; flex-direction: column; z-index: 20; }
+    #sidebar {
+        width: 350px;
+        background: #fff;
+        border-left: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        z-index: 20;
+    }
     
-    #search-container { padding: 15px; border-bottom: 1px solid #eee; background: #fff; }
-    .control-group { display: flex; gap: 10px; }
-    #search { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-    #exportImageBtn { padding: 8px 15px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap; transition: background-color 0.2s; }
-    #exportImageBtn:hover { background: #27ae60; }
+    #search-container {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+    }
+    .control-group {
+        display: flex;
+        gap: 10px;
+    }
+    #search {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    #exportImageBtn {
+        padding: 8px 15px;
+        background: #2ecc71;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        white-space: nowrap;
+        transition: background-color 0.2s;
+    }
+    #exportImageBtn:hover {
+        background: #27ae60;
+    }
 
-    .stats-panel { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
-    .stats-title { font-size: 14px; color: #666; margin-bottom: 5px; }
-    .stats-numbers { font-size: 16px; font-weight: bold; color: #333; }
-    .highlight-num { color: #5cacec; margin: 0 2px; }
+    .stats-panel {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+    }
+    .stats-title {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    .stats-numbers {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+    }
+    .highlight-num {
+        color: #5cacec;
+        margin: 0 2px;
+    }
 
-    .sidebar-content { flex: 1; overflow-y: auto; padding: 10px; background-color: #f9f9f9; }
+    .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: #f9f9f9;
+    }
     
-    .province-item { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
-    .province-header { padding: 12px 15px; background: #f5f5f5; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s; }
-    .province-header:hover { background: #eaeaea; }
+    .province-item {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .province-header {
+        padding: 12px 15px;
+        background: #f5f5f5;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: background 0.2s;
+    }
+    .province-header:hover {
+        background: #eaeaea;
+    }
     
-    .status-icon { margin-right: 10px; font-size: 16px; color: #ccc; width: 20px; text-align: center; cursor: pointer; }
-    .status-icon.active { color: #5cacec; }
+    .status-icon {
+        margin-right: 10px;
+        font-size: 16px;
+        color: #ccc;
+        width: 20px;
+        text-align: center;
+        cursor: pointer;
+    }
+    .status-icon.active {
+        color: #5cacec;
+    }
     
-    .province-title { flex: 1; font-size: 15px; font-weight: 500; color: #333; }
-    .province-arrow { color: #999; font-size: 12px; transition: transform 0.2s; }
+    .province-title {
+        flex: 1;
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+    }
+    .province-arrow {
+        color: #999;
+        font-size: 12px;
+        transition: transform 0.2s;
+    }
     
-    .province-item.expanded .province-arrow { transform: rotate(90deg); }
+    .province-item.expanded .province-arrow {
+        transform: rotate(90deg);
+    }
     
-    .city-list-container { display: none; border-top: 1px solid #eee; }
-    .province-item.expanded .city-list-container { display: block; }
+    .city-list-container {
+        display: none;
+        border-top: 1px solid #eee;
+    }
+    .province-item.expanded .city-list-container {
+        display: block;
+    }
     
-    .city-item { padding: 10px 15px 10px 45px; border-bottom: 1px solid #f0f0f0; cursor: pointer; display: flex; align-items: center; font-size: 14px; color: #666; transition: background 0.2s; }
-    .city-item:last-child { border-bottom: none; }
-    .city-item:hover { background-color: #f0f8ff; }
-    .city-item.selected { background-color: #eaf6ff; color: #333; font-weight: 500; }
-    .city-item .check-mark { margin-left: auto; color: #5cacec; opacity: 0; }
-    .city-item.selected .check-mark { opacity: 1; }
+    .city-item {
+        padding: 10px 15px 10px 45px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        color: #666;
+        transition: background 0.2s;
+    }
+    .city-item:last-child {
+        border-bottom: none;
+    }
+    .city-item:hover {
+        background-color: #f0f8ff;
+    }
+    .city-item.selected {
+        background-color: #eaf6ff;
+        color: #333;
+        font-weight: 500;
+    }
+    .city-item .check-mark {
+        margin-left: auto;
+        color: #5cacec;
+        opacity: 0;
+    }
+    .city-item.selected .check-mark {
+        opacity: 1;
+    }
 
-    .sidebar-footer { padding: 15px; border-top: 1px solid #ddd; background: #fff; text-align: center; }
-    #clear-map-btn { width: 100%; padding: 10px; background-color: #ff4757; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-    #clear-map-btn:hover { background-color: #ff6b81; }
-    .busuanzi-container { margin-bottom: 10px; font-size: 12px; color: #999; display: flex; justify-content: center; gap: 10px; }
+    .sidebar-footer {
+        padding: 15px;
+        border-top: 1px solid #ddd;
+        background: #fff;
+        text-align: center;
+    }
+    #clear-map-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #ff4757;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    #clear-map-btn:hover {
+        background-color: #ff6b81;
+    }
+    .busuanzi-container {
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: #999;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
 
     @media (max-width: 900px) {
-        .page-container { flex-direction: column; }
-        #map-container { height: 50vh; flex: none; }
-        #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
-        
-        /* [CSS 修正点] 仅在移动端启用页面的垂直滚动 */
-        body, html { overflow: auto; } 
+        .page-container {
+            flex-direction: column;
+        }
+        #map-container {
+            height: 50vh;
+            flex: none;
+        }
+        #sidebar {
+            width: 100%;
+            flex: 1;
+            border-left: none;
+            border-top: 1px solid #ddd;
+        }
+        body, html {
+            overflow: auto;
+        }
     }
 </style>
 </head>
@@ -121,10 +346,11 @@
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 这个路径在您最初的环境中是有效的，我们保持不变。
-            // 如果地图依然加载失败，请按F12检查“网络”面板，确认此文件是否404。
             const GEOJSON_URL = "/visitor-map/city_merged.geojson";
             const CITYLIST_URL = "/visitor-map/citylist.json";
+
+            // 使用一个独一无二的名称，彻底禁用ECharts的默认地图
+            const MAP_NAME = 'my-footprint-map';
 
             const domMap = document.getElementById('chinaMap');
             const domList = document.getElementById('listContent');
@@ -135,69 +361,62 @@
             const domLoading = document.getElementById('loadingTip');
             const domProvCount = document.getElementById('province-count');
             const domCityCount = document.getElementById('city-count');
-
-            let myChart = echarts.init(domMap);
             
-            let provinceMap = {};
-            let cityToProvince = {};
-            let selectedCities = new Set();
-            let expandedProvinces = new Set();
-            let initialOption = {};
+            let myChart = echarts.init(domMap);
+            let provinceMap = {}, cityToProvince = {}, selectedCities = new Set(), expandedProvinces = new Set(), initialOption = {};
 
             Promise.all([
-                fetch(GEOJSON_URL).then(r => { if(!r.ok) throw new Error("GeoJSON加载失败"); return r.json(); }),
-                fetch(CITYLIST_URL).then(r => { if(!r.ok) throw new Error("CityList加载失败"); return r.json(); })
+                fetch(GEOJSON_URL).then(r => r.json()),
+                fetch(CITYLIST_URL).then(r => r.json())
             ]).then(([geoJson, cityList]) => {
                 domLoading.style.display = 'none';
                 
+                echarts.registerMap(MAP_NAME, geoJson);
+
                 processData(cityList);
-                echarts.registerMap('china', geoJson);
-                
-                // [JS 修正点] 核心修正：确保所有初始化操作都在数据加载成功之后执行
                 loadStorage();
-                initMap();
-                updateUI();
+                initializeMapAndFirstRender(); 
+                renderSidebar();
+                updateStats();
 
             }).catch(err => {
-                domLoading.textContent = "数据加载失败，请检查文件路径是否正确 (F12查看控制台)";
+                domLoading.textContent = "数据加载或地图注册失败！请按F12在Console面板查看错误详情。";
                 domLoading.style.color = "red";
-                console.error("Init Error:", err);
+                console.error("地图初始化失败:", err);
             });
-
+            
             function processData(list) {
                 list.forEach(item => {
-                    const city = item["地名"];
-                    const prov = item["省级"];
+                    const city = item["地名"], prov = item["省级"];
                     if (city && prov) {
                         cityToProvince[city] = prov;
-                        if (!provinceMap[prov]) {
-                            provinceMap[prov] = [];
-                        }
+                        if (!provinceMap[prov]) provinceMap[prov] = [];
                         provinceMap[prov].push(city);
                     }
                 });
             }
 
-            function initMap() {
+            function initializeMapAndFirstRender() {
+                const initialRegions = Array.from(selectedCities).map(city => ({
+                    name: city,
+                    itemStyle: { areaColor: '#5cacec', borderColor: '#4a90e2' }
+                }));
                 const option = {
                     tooltip: { trigger: 'item', formatter: '{b}' },
                     geo: {
-                        map: 'china',
+                        map: MAP_NAME,
                         roam: true,
                         label: { show: false },
                         layoutCenter: ['50%', '52%'],
                         layoutSize: '105%',
                         itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-                        emphasis: { itemStyle: { areaColor: '#E58B47' }, label: { show: false } },
-                        select: { disabled: true },
-                        regions: [] 
+                        emphasis: { itemStyle: { areaColor: '#E58B47' } },
+                        regions: initialRegions
                     },
                     series: []
                 };
-                
                 myChart.setOption(option, true);
                 initialOption = myChart.getOption();
-                
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
                         toggleCity(params.name);
@@ -218,37 +437,24 @@
                 const keyword = domSearch.value.trim();
                 const sortedProvinces = Object.keys(provinceMap).sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 let hasResult = false;
-
                 sortedProvinces.forEach(prov => {
-                    let cities = provinceMap[prov];
-                    if (keyword) {
-                        cities = cities.filter(c => c.includes(keyword));
-                    }
+                    let cities = provinceMap[prov].filter(c => !keyword || c.includes(keyword));
                     if (cities.length === 0) return;
                     hasResult = true;
-
                     const allCitiesInThisProvince = provinceMap[prov];
                     const selectedCount = allCitiesInThisProvince.filter(c => selectedCities.has(c)).length;
-                    
-                    const isExpanded = expandedProvinces.has(prov) || keyword;
+                    const isExpanded = expandedProvinces.has(prov) || !!keyword;
                     const wrapper = document.createElement('div');
                     wrapper.className = `province-item ${isExpanded ? 'expanded' : ''}`;
-
                     const header = document.createElement('div');
                     header.className = 'province-header';
-                    
                     let iconClass = 'far fa-square';
-                    if (selectedCount === allCitiesInThisProvince.length && allCitiesInThisProvince.length > 0) iconClass = 'fas fa-check-square active';
-                    else if (selectedCount > 0) iconClass = 'fas fa-minus-square active';
-
-                    header.innerHTML = `
-                        <div style="display:flex; align-items:center; flex-grow: 1;">
-                            <i class="status-icon ${iconClass}"></i>
-                            <span class="province-title">${prov}</span>
-                        </div>
-                        <span class="province-arrow">▶</span>
-                    `;
-
+                    if (selectedCount === allCitiesInThisProvince.length && allCitiesInThisProvince.length > 0) {
+                        iconClass = 'fas fa-check-square active';
+                    } else if (selectedCount > 0) {
+                        iconClass = 'fas fa-minus-square active';
+                    }
+                    header.innerHTML = `<div style="display:flex; align-items:center; flex-grow: 1;"><i class="status-icon ${iconClass}"></i><span class="province-title">${prov}</span></div><span class="province-arrow">▶</span>`;
                     header.addEventListener('click', (e) => {
                         if (e.target.classList.contains('status-icon')) {
                             e.stopPropagation();
@@ -262,40 +468,71 @@
                             wrapper.classList.toggle('expanded');
                         }
                     });
-
                     const listContainer = document.createElement('div');
                     listContainer.className = 'city-list-container';
-
                     cities.forEach(city => {
                         const cityDiv = document.createElement('div');
                         const isSelected = selectedCities.has(city);
                         cityDiv.className = `city-item ${isSelected ? 'selected' : ''}`;
                         cityDiv.innerHTML = `<span>${city}</span><i class="fas fa-check check-mark"></i>`;
-                        
                         cityDiv.addEventListener('click', (e) => {
                             e.stopPropagation();
                             toggleCity(city);
                         });
                         listContainer.appendChild(cityDiv);
                     });
-
                     wrapper.appendChild(header);
                     wrapper.appendChild(listContainer);
                     domList.appendChild(wrapper);
                 });
-
                 if (!hasResult) {
                     domList.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">未找到匹配城市</div>';
                 }
             }
-            
-            function updateUI() { updateMapColor(); renderSidebar(); updateStats(); }
-            function toggleCity(city) { if (selectedCities.has(city)) selectedCities.delete(city); else selectedCities.add(city); saveStorage(); updateUI(); }
-            function toggleProvince(prov, citiesToToggle, shouldSelect) { citiesToToggle.forEach(city => { if (shouldSelect) selectedCities.add(city); else selectedCities.delete(city); }); saveStorage(); updateUI(); }
-            function updateStats() { domCityCount.textContent = selectedCities.size; const provs = new Set(); selectedCities.forEach(c => { if (cityToProvince[c]) provs.add(cityToProvince[c]); }); domProvCount.textContent = provs.size; }
+
+            function updateUI() {
+                updateMapColor();
+                renderSidebar();
+                updateStats();
+            }
+
+            function toggleCity(city) {
+                if (selectedCities.has(city)) {
+                    selectedCities.delete(city);
+                } else {
+                    selectedCities.add(city);
+                }
+                saveStorage();
+                updateUI();
+            }
+
+            function toggleProvince(prov, citiesToToggle, shouldSelect) {
+                citiesToToggle.forEach(city => {
+                    if (shouldSelect) {
+                        selectedCities.add(city);
+                    } else {
+                        selectedCities.delete(city);
+                    }
+                });
+                saveStorage();
+                updateUI();
+            }
+
+            function updateStats() {
+                domCityCount.textContent = selectedCities.size;
+                const provs = new Set();
+                selectedCities.forEach(c => {
+                    if (cityToProvince[c]) provs.add(cityToProvince[c]);
+                });
+                domProvCount.textContent = provs.size;
+            }
 
             domExportBtn.addEventListener('click', () => {
-                const dataUrl = myChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#f4f7f9' });
+                const dataUrl = myChart.getDataURL({
+                    type: 'png',
+                    pixelRatio: 2,
+                    backgroundColor: '#f4f7f9'
+                });
                 const link = document.createElement('a');
                 link.href = dataUrl;
                 link.download = 'my_footprints_map.png';
@@ -305,16 +542,41 @@
             });
 
             domSearch.addEventListener('input', () => renderSidebar());
-            domResetBtn.addEventListener('click', () => myChart.setOption({ geo: { zoom: initialOption.geo[0].zoom, center: initialOption.geo[0].center } }));
-            domClearBtn.addEventListener('click', () => { if (confirm('确定要清空所有已点亮的城市吗？')) { selectedCities.clear(); expandedProvinces.clear(); saveStorage(); updateUI(); } });
+
+            domResetBtn.addEventListener('click', () => {
+                myChart.setOption({
+                    geo: {
+                        zoom: initialOption.geo[0].zoom,
+                        center: initialOption.geo[0].center
+                    }
+                });
+            });
+
+            domClearBtn.addEventListener('click', () => {
+                if (confirm('确定要清空所有已点亮的城市吗？')) {
+                    selectedCities.clear();
+                    expandedProvinces.clear();
+                    saveStorage();
+                    updateUI();
+                }
+            });
+
             window.addEventListener('resize', () => myChart.resize());
-            function saveStorage() { localStorage.setItem('my_footprints', JSON.stringify(Array.from(selectedCities))); }
+
+            function saveStorage() {
+                localStorage.setItem('my_footprints', JSON.stringify(Array.from(selectedCities)));
+            }
+
             function loadStorage() {
                 const saved = localStorage.getItem('my_footprints');
-                if (saved) { try { selectedCities = new Set(JSON.parse(saved)); } catch(e) { console.error('Storage Error', e); } }
+                if (saved) {
+                    try {
+                        selectedCities = new Set(JSON.parse(saved));
+                    } catch (e) {
+                        console.error('Storage Error', e);
+                    }
+                }
             }
-            
-            // 删除了原始代码中在 Promise 外面的错误调用
         });
     </script>
     <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
