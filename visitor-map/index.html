@@ -24,8 +24,9 @@
     #expandCollapseBtn { width: 100%; padding: 10px 12px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
     .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
     .province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-    .province-status-icon { margin-right: 8px; color: #5cacec; font-size: 1.1em; }
-    .province-name-text { flex-grow: 1; }
+    .province-status-icon { margin-right: 8px; color: #5cacec; font-size: 1.1em; width: 20px; text-align: center; }
+    .province-name-text { flex-grow: 1; cursor: pointer; }
+    .province-city-count { font-size: 1.1em; color: #e74c3c; font-weight: bold; margin-left: 4px; }
     .province-toggle-arrow { display: inline-block; transition: transform 0.2s; font-size: 0.9em; color: #888; margin-left: auto; }
     .province.expanded .province-toggle-arrow { transform: rotate(90deg); }
     .city-list { margin-left: 10px; display: none; }
@@ -193,7 +194,6 @@
 
                 function renderList(dataToRender) {
                     cityListContainer.innerHTML = '';
-                    // isAllExpanded is handled by the expandCollapseBtn
                     
                     const groupedByProvince = dataToRender.reduce((acc, cityName) => {
                         const province = cityToProvinceMap.get(cityName) || '未知';
@@ -205,15 +205,21 @@
                         return pinyinPro.pinyin(a, { toneType: 'none' }).localeCompare(pinyinPro.pinyin(b, { toneType: 'none' }));
                     });
 
+                    if (sortedProvinces.length === 0) {
+                        const message = searchInput.value.trim() ? '未找到相关城市' : '在地图上点击城市来添加足迹';
+                        cityListContainer.innerHTML = `<div style="text-align:center;color:#888;padding:20px;">${message}</div>`;
+                        return;
+                    }
+
                     sortedProvinces.forEach(province => {
-                        const citiesInProvince = groupedByProvince[province];
-                        const allCitiesInProvince = allCities.filter(c => cityToProvinceMap.get(c) === province);
+                        const citiesToShowInList = groupedByProvince[province];
+                        const allCitiesInThisProvince = allCities.filter(c => cityToProvinceMap.get(c) === province);
                         
-                        const selectedCount = allCitiesInProvince.filter(city => selectedCities.has(city)).length;
+                        const selectedCount = allCitiesInThisProvince.filter(city => selectedCities.has(city)).length;
                         let statusIconClass = 'fa-regular fa-square';
-                        if (selectedCount > 0 && selectedCount < allCitiesInProvince.length) {
+                        if (selectedCount > 0 && selectedCount < allCitiesInThisProvince.length) {
                             statusIconClass = 'fa-solid fa-minus-square';
-                        } else if (selectedCount === allCitiesInProvince.length) {
+                        } else if (selectedCount === allCitiesInThisProvince.length) {
                             statusIconClass = 'fa-solid fa-check-square';
                         }
 
@@ -223,7 +229,7 @@
                         
                         provinceDiv.innerHTML = `
                             <i class="province-status-icon ${statusIconClass}"></i>
-                            <span class="province-name-text">${province} (${citiesInProvince.length})</span>
+                            <span class="province-name-text">${province} (<span class="province-city-count">${citiesToShowInList.length}</span>)</span>
                             <span class="province-toggle-arrow">▶</span>
                         `;
                         const citySubListDiv = document.createElement('div');
@@ -233,8 +239,8 @@
                         const statusIcon = provinceDiv.querySelector('.province-status-icon');
                         statusIcon.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            const shouldSelectAll = selectedCount < allCitiesInProvince.length;
-                            allCitiesInProvince.forEach(city => {
+                            const shouldSelectAll = selectedCount < allCitiesInThisProvince.length;
+                            allCitiesInThisProvince.forEach(city => {
                                 if (shouldSelectAll) {
                                     selectedCities.add(city);
                                 } else {
@@ -253,7 +259,7 @@
                         });
 
 
-                        citiesInProvince.forEach(cityName => {
+                        citiesToShowInList.forEach(cityName => {
                             const cityDiv = document.createElement('div');
                             cityDiv.className = 'city';
                             if (selectedCities.has(cityName)) {
@@ -269,16 +275,13 @@
                         cityListContainer.appendChild(provinceDiv);
                         cityListContainer.appendChild(citySubListDiv);
                     });
-                     if (cityListContainer.children.length === 0 && dataToRender.length === 0) {
-                        cityListContainer.innerHTML = `<div style="text-align:center;color:#888;padding:20px;">未找到相关城市</div>`;
-                    }
                 }
                 
                 expandCollapseBtn.addEventListener('click', () => {
                     isAllExpanded = !isAllExpanded;
                     expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
-                    document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
-                    document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
+                    // Re-render the list to apply the expanded state
+                    updateAndRender(); 
                 });
                 
                 searchInput.addEventListener('input', updateAndRender);
@@ -297,6 +300,6 @@
             window.addEventListener('resize', () => myChart.resize());
         });
     </script>
-    <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
+    <script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
 </body>
 </html>
