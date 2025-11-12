@@ -24,7 +24,9 @@
     #expandCollapseBtn { width: 100%; padding: 10px 12px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
     .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
     .province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-    .province-toggle-arrow { display: inline-block; margin-right: 8px; transition: transform 0.2s; font-size: 0.9em; color: #888; }
+    .province-status-icon { margin-right: 8px; color: #5cacec; font-size: 1.1em; }
+    .province-name-text { flex-grow: 1; }
+    .province-toggle-arrow { display: inline-block; transition: transform 0.2s; font-size: 0.9em; color: #888; margin-left: auto; }
     .province.expanded .province-toggle-arrow { transform: rotate(90deg); }
     .city-list { margin-left: 10px; display: none; }
     .province.expanded + .city-list { display: block; }
@@ -71,9 +73,9 @@
             <div class="sidebar-footer">
                 <p id="stats-counter">暂无足迹</p>
                 <div class="busuanzi-container">
-					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_page_uv">加载中...</span></div>
+					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_site_uv">加载中...</span></div>
 					<div class="busuanzi-item">|</div>
-					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_page_pv">加载中...</span></div>
+					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_site_pv">加载中...</span></div>
 				</div>
                 <button id="clear-map-btn">清空所有足迹</button>
             </div>
@@ -81,6 +83,7 @@
     </div>
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.5/dist/pinyin-pro.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const geoJsonPath = "/visitor-map/city_merged.geojson";
@@ -98,16 +101,16 @@
             let isAllExpanded = false;
             let cityToProvinceMap = new Map();
             let allCities = [];
-            let selectedCities = [];
+            let selectedCities = new Set();
             let initialZoom, initialCenter;
 
             function loadDataFromStorage() {
                 const savedData = localStorage.getItem('visitorFootprints');
-                selectedCities = savedData ? JSON.parse(savedData) : [];
+                selectedCities = new Set(savedData ? JSON.parse(savedData) : []);
             }
 
             function saveDataToStorage() {
-                localStorage.setItem('visitorFootprints', JSON.stringify(selectedCities));
+                localStorage.setItem('visitorFootprints', JSON.stringify(Array.from(selectedCities)));
             }
 
             Promise.all([
@@ -150,11 +153,10 @@
                 });
                 
                 function toggleCity(cityName) {
-                    const index = selectedCities.indexOf(cityName);
-                    if (index > -1) {
-                        selectedCities.splice(index, 1);
+                    if (selectedCities.has(cityName)) {
+                        selectedCities.delete(cityName);
                     } else {
-                        selectedCities.push(cityName);
+                        selectedCities.add(cityName);
                     }
                     saveDataToStorage();
                     updateAndRender();
@@ -166,7 +168,7 @@
 
                 clearMapBtn.addEventListener('click', () => {
                     if (confirm('确定要清空所有已点亮的足迹吗？此操作不可恢复。')) {
-                        selectedCities = [];
+                        selectedCities.clear();
                         saveDataToStorage();
                         updateAndRender();
                     }
@@ -176,13 +178,13 @@
                     const keyword = searchInput.value.trim().toLowerCase();
                     const citiesToRenderInList = keyword ? allCities.filter(name => name.toLowerCase().includes(keyword)) : allCities;
 
-                    myChart.setOption({ series: [{ data: selectedCities.map(name => ({ name: name, value: 1 })) }] });
+                    myChart.setOption({ series: [{ data: Array.from(selectedCities).map(name => ({ name: name, value: 1 })) }] });
 
-                    const cityCount = selectedCities.length;
+                    const cityCount = selectedCities.size;
                     if (cityCount === 0) {
                         statsCounter.textContent = '暂无足迹';
                     } else {
-                        const provinceCount = new Set(selectedCities.map(name => cityToProvinceMap.get(name))).size;
+                        const provinceCount = new Set(Array.from(selectedCities).map(name => cityToProvinceMap.get(name))).size;
                         statsCounter.textContent = `已点亮 ${provinceCount} 个省份 / ${cityCount} 座城市`;
                     }
 
@@ -191,38 +193,70 @@
 
                 function renderList(dataToRender) {
                     cityListContainer.innerHTML = '';
-                    isAllExpanded = false;
-                    expandCollapseBtn.textContent = '展开全部';
-
-                    if (dataToRender.length === 0) {
-                        cityListContainer.innerHTML = `<div style="text-align:center;color:#888;padding:20px;">未找到相关城市</div>`;
-                        return;
-                    }
-
+                    // isAllExpanded is handled by the expandCollapseBtn
+                    
                     const groupedByProvince = dataToRender.reduce((acc, cityName) => {
                         const province = cityToProvinceMap.get(cityName) || '未知';
                         (acc[province] = acc[province] || []).push(cityName);
                         return acc;
                     }, {});
 
-                    const sortedProvinces = Object.keys(groupedByProvince).sort();
+                    const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
+                        return pinyinPro.pinyin(a, { toneType: 'none' }).localeCompare(pinyinPro.pinyin(b, { toneType: 'none' }));
+                    });
+
                     sortedProvinces.forEach(province => {
-                        const cities = groupedByProvince[province];
+                        const citiesInProvince = groupedByProvince[province];
+                        const allCitiesInProvince = allCities.filter(c => cityToProvinceMap.get(c) === province);
+                        
+                        const selectedCount = allCitiesInProvince.filter(city => selectedCities.has(city)).length;
+                        let statusIconClass = 'fa-regular fa-square';
+                        if (selectedCount > 0 && selectedCount < allCitiesInProvince.length) {
+                            statusIconClass = 'fa-solid fa-minus-square';
+                        } else if (selectedCount === allCitiesInProvince.length) {
+                            statusIconClass = 'fa-solid fa-check-square';
+                        }
+
                         const provinceDiv = document.createElement('div');
                         provinceDiv.className = 'province';
-                        provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
+                        if (isAllExpanded) provinceDiv.classList.add('expanded');
+                        
+                        provinceDiv.innerHTML = `
+                            <i class="province-status-icon ${statusIconClass}"></i>
+                            <span class="province-name-text">${province} (${citiesInProvince.length})</span>
+                            <span class="province-toggle-arrow">▶</span>
+                        `;
                         const citySubListDiv = document.createElement('div');
                         citySubListDiv.className = 'city-list';
+                        if (isAllExpanded) citySubListDiv.style.display = 'block';
 
-                        provinceDiv.addEventListener('click', () => {
+                        const statusIcon = provinceDiv.querySelector('.province-status-icon');
+                        statusIcon.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const shouldSelectAll = selectedCount < allCitiesInProvince.length;
+                            allCitiesInProvince.forEach(city => {
+                                if (shouldSelectAll) {
+                                    selectedCities.add(city);
+                                } else {
+                                    selectedCities.delete(city);
+                                }
+                            });
+                            saveDataToStorage();
+                            updateAndRender();
+                        });
+
+                        const clickableArea = provinceDiv.querySelector('.province-name-text');
+                        clickableArea.addEventListener('click', (e) => {
+                            e.stopPropagation();
                             provinceDiv.classList.toggle('expanded');
                             citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
                         });
 
-                        cities.forEach(cityName => {
+
+                        citiesInProvince.forEach(cityName => {
                             const cityDiv = document.createElement('div');
                             cityDiv.className = 'city';
-                            if (selectedCities.includes(cityName)) {
+                            if (selectedCities.has(cityName)) {
                                 cityDiv.classList.add('selected');
                             }
                             cityDiv.innerHTML = `<div class="city-name">${cityName}</div>`;
@@ -235,6 +269,9 @@
                         cityListContainer.appendChild(provinceDiv);
                         cityListContainer.appendChild(citySubListDiv);
                     });
+                     if (cityListContainer.children.length === 0 && dataToRender.length === 0) {
+                        cityListContainer.innerHTML = `<div style="text-align:center;color:#888;padding:20px;">未找到相关城市</div>`;
+                    }
                 }
                 
                 expandCollapseBtn.addEventListener('click', () => {
