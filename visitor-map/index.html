@@ -402,7 +402,7 @@
                     itemStyle: { areaColor: '#5cacec', borderColor: '#4a90e2' }
                 }));
                 const option = {
-                    tooltip: { show: false }, // 直接禁用提示框
+                    tooltip: { trigger: 'item', formatter: '{b}' },
                     geo: {
                         map: MAP_NAME,
                         roam: true,
@@ -410,7 +410,14 @@
                         layoutCenter: ['50%', '52%'],
                         layoutSize: '105%',
                         itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-                        emphasis: { itemStyle: { areaColor: '#E58B47' } },
+                        emphasis: {
+							label: {
+								show: false // 在高亮状态下，不显示区域内部的标签
+							},
+							itemStyle: {
+								areaColor: '#E58B47' // 保持高亮时的颜色不变
+							}
+						},
                         regions: initialRegions
                     },
                     series: []
