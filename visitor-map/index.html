@@ -83,7 +83,8 @@
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const geoJsonPath = "/travel-map/city_merged.geojson";
+            const geoJsonPath = "/visitor-map/city_merged.geojson";
+            const cityListPath = "/visitor-map/citylist.json";
             
             const myChart = echarts.init(document.getElementById('chinaMap'));
             const cityListContainer = document.getElementById('cityListContainer');
@@ -109,21 +110,21 @@
                 localStorage.setItem('visitorFootprints', JSON.stringify(selectedCities));
             }
 
-            fetch(geoJsonPath)
-            .then(res => res.json())
-            .then(geoJson => {
+            Promise.all([
+                fetch(geoJsonPath).then(res => res.json()),
+                fetch(cityListPath).then(res => res.json())
+            ])
+            .then(([geoJson, cityList]) => {
                 loadingIndicator.style.display = 'none';
                 
-                if (geoJson.features) {
-                    geoJson.features.forEach(feature => {
-                        if (feature.properties) {
-                            const cityName = feature.properties.name;
-                            const provinceName = feature.properties.parent ? feature.properties.parent.name : '其他';
-                            cityToProvinceMap.set(cityName, provinceName);
-                            allCities.push(cityName);
-                        }
-                    });
-                }
+                cityList.forEach(item => {
+                    const cityName = item["地名"];
+                    const provinceName = item["省级"];
+                    if (cityName && provinceName) {
+                        cityToProvinceMap.set(cityName, provinceName);
+                        allCities.push(cityName);
+                    }
+                });
                 
                 echarts.registerMap('china-city', geoJson);
 
@@ -253,8 +254,8 @@
                 initialCenter = initialOption.series[0].center;
             })
             .catch(error => {
-                loadingIndicator.textContent = "地图数据加载失败，请刷新页面重试。";
-                console.error("加载地图数据失败:", error);
+                loadingIndicator.textContent = "数据加载失败，请刷新页面重试。";
+                console.error("数据加载失败:", error);
             });
             window.addEventListener('resize', () => myChart.resize());
         });
