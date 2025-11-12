@@ -144,11 +144,14 @@
                 fetch(CITYLIST_URL).then(r => { if(!r.ok) throw new Error("CityList加载失败"); return r.json(); })
             ]).then(([geoJson, cityList]) => {
                 domLoading.style.display = 'none';
+                
                 processData(cityList);
                 echarts.registerMap('china', geoJson);
-                loadStorage();
+                
                 initMap();
+                loadStorage();
                 updateUI();
+
             }).catch(err => {
                 domLoading.textContent = "数据加载失败，请检查文件路径是否正确 (F12查看控制台)";
                 domLoading.style.color = "red";
@@ -188,8 +191,7 @@
                 
                 myChart.setOption(option, true);
                 initialOption = myChart.getOption();
-                updateMapColor();
-
+                
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
                         toggleCity(params.name);
