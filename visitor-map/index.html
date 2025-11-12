@@ -6,57 +6,121 @@
     <title>点亮你的中国足迹地图</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-    /* --- (所有CSS样式与上一版完全相同) --- */
+    /* --- 基础样式 --- */
     body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-x: hidden; }
-    .page-container { display: flex; width: 90%; max-width: 1400px; height: 80vh; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
+    .header-container { text-align: center; padding: 0 20px; margin-bottom: 25px; margin-top: 20px; }
+    .header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
+    .header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+    .page-container { display: flex; width: 90%; max-width: 1400px; height: 80vh; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
     #map-container { position: relative; flex: 3; height: 100%; min-width: 0; touch-action: none; }
+    #chinaMap { width: 100%; height: 100%; }
+    .loading-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.8); color: #888; font-size: 16px; z-index: 10; transition: opacity 0.3s; }
+    .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #333; opacity: 0.5; z-index: 10; pointer-events: none; }
+    .reset-view-btn { position: absolute; bottom: 10px; right: 10px; width: 32px; height: 32px; background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; transition: background-color 0.2s, transform 0.2s; }
+    .reset-view-btn:hover { background-color: #fff; transform: rotate(90deg); }
     #sidebar { flex: 1; min-width: 300px; display: flex; flex-direction: column; border-left: 1px solid #e0e0e0; background-color: #fafcfe; }
+    #search-container { padding: 20px 25px; border-bottom: 1px solid #e0e0e0; display: flex; flex-direction: column; gap: 10px; }
+    #search { flex-grow: 1; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    #expandCollapseBtn { width: 100%; padding: 10px 12px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
+    .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
+    .province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+    .province-toggle-arrow { display: inline-block; margin-right: 8px; transition: transform 0.2s; font-size: 0.9em; color: #888; }
+    .province.expanded .province-toggle-arrow { transform: rotate(90deg); }
+    .city-list { margin-left: 10px; display: none; }
+    .province.expanded + .city-list { display: block; }
+    .city { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s; border: 1px solid #ddd; background-color: #fff; }
+    .city:hover { background-color: #eaf6ff; transform: scale(1.03); }
+    .city.selected { border-color: #5cacec; background-color: #eaf6ff; }
+    .sidebar-footer { padding: 20px 25px; border-top: 1px solid #e0e0e0; margin-top: auto; text-align: center; background-color: #fafcfe; }
+    #stats-counter { font-weight: 500; color: #555; margin: 12px 0; font-size: 14px; }
+    .busuanzi-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 15px; font-size: 13px; color: #999; }
+    .busuanzi-item { display: flex; align-items: center; gap: 5px; }
+    #clear-map-btn { padding: 10px 12px; font-size: 14px; background-color: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; margin-top: 15px; }
+    #clear-map-btn:hover { background-color: #c0392b; }
+    
+    @media (max-width: 900px) {
+        html, body { height: auto; justify-content: flex-start; }
+        .header-container h1 { font-size: 1.8rem; }
+        body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
+        body #map-container { height: 50vh; flex: none; }
+        body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
+        body .sidebar-content { overflow-y: visible; }
+    }
 </style>
 </head>
 <body>
-    <!-- (所有HTML结构与上一版完全相同) -->
     <div class="header-container">
         <h1>点亮你的中国足迹地图</h1>
-        <p>点击地图或右侧列表中的城市，即可“点亮”或“熄灭”你的足迹。<br>所有数据将自动保存在你的浏览器中。</p>
+        <p>点击地图或右侧列表中的城市，即可“点亮”或“熄灭”你的足迹。<br>数据将保存在你的浏览器中，清除浏览器数据将会丢失。</p>
     </div>
-    <div class="page-container"><!-- ... --></div>
+    <div class="page-container">
+        <div id="map-container">
+            <div class="loading-indicator">地图数据加载中...</div>
+            <div id="chinaMap"></div>
+            <div class="map-approval-number">GS(2024)0650</div>
+            <span class="reset-view-btn" title="重置视图">⟲</span>
+        </div>
+        <div id="sidebar">
+            <div id="search-container">
+                <input type="text" id="search" placeholder="搜索全国城市...">
+                <button id="expandCollapseBtn">展开全部</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="cityListContainer"></div>
+            </div>
+            <div class="sidebar-footer">
+                <p id="stats-counter">暂无足迹</p>
+                <div class="busuanzi-container">
+					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_page_uv">加载中...</span></div>
+					<div class="busuanzi-item">|</div>
+					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_page_pv">加载中...</span></div>
+				</div>
+                <button id="clear-map-btn">清空所有足迹</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const geoJsonPath = "/travel-map/city_merged.geojson";
             
-            // (所有DOM元素获取与上一版完全相同)
             const myChart = echarts.init(document.getElementById('chinaMap'));
-            // ...
-
+            const cityListContainer = document.getElementById('cityListContainer');
+            const searchInput = document.getElementById('search');
+            const statsCounter = document.getElementById('stats-counter');
+            const loadingIndicator = document.querySelector('.loading-indicator');
+            const resetViewBtn = document.querySelector('.reset-view-btn');
+            const expandCollapseBtn = document.getElementById('expandCollapseBtn');
+            const clearMapBtn = document.getElementById('clear-map-btn');
+            
+            let isAllExpanded = false;
             let cityToProvinceMap = new Map();
-            let allCities = []; // 【新增】存储所有城市的列表
+            let allCities = [];
             let selectedCities = [];
-            // ...
+            let initialZoom, initialCenter;
 
-            // --- 核心逻辑 ---
+            function loadDataFromStorage() {
+                const savedData = localStorage.getItem('visitorFootprints');
+                selectedCities = savedData ? JSON.parse(savedData) : [];
+            }
 
-            function loadDataFromStorage() { /* ... (不变) ... */ }
-            function saveDataToStorage() { /* ... (不变) ... */ }
+            function saveDataToStorage() {
+                localStorage.setItem('visitorFootprints', JSON.stringify(selectedCities));
+            }
 
-            // 【重大修正】现在只加载geojson文件
             fetch(geoJsonPath)
             .then(res => res.json())
             .then(geoJson => {
                 loadingIndicator.style.display = 'none';
                 
-                // 【重大修正】从geojson中构建完整的城市-省份映射和城市列表
                 if (geoJson.features) {
                     geoJson.features.forEach(feature => {
                         if (feature.properties) {
                             const cityName = feature.properties.name;
-                            // GeoJSON中的"parent"属性通常包含了上级行政区信息
-                            // 我们需要找到它的"name"作为省名
                             const provinceName = feature.properties.parent ? feature.properties.parent.name : '其他';
-                            
                             cityToProvinceMap.set(cityName, provinceName);
-                            allCities.push(cityName); // 将所有城市名存入列表
+                            allCities.push(cityName);
                         }
                     });
                 }
@@ -95,17 +159,24 @@
                     updateAndRender();
                 }
                 
-                // ... (resetViewBtn, clearMapBtn 事件监听器不变) ...
+                resetViewBtn.addEventListener('click', () => {
+                    myChart.setOption({ series: [{ zoom: initialZoom, center: initialCenter }] });
+                });
+
+                clearMapBtn.addEventListener('click', () => {
+                    if (confirm('确定要清空所有已点亮的足迹吗？此操作不可恢复。')) {
+                        selectedCities = [];
+                        saveDataToStorage();
+                        updateAndRender();
+                    }
+                });
                 
                 function updateAndRender() {
                     const keyword = searchInput.value.trim().toLowerCase();
-                    // 【修正】搜索范围从已选城市改为所有城市
                     const citiesToRenderInList = keyword ? allCities.filter(name => name.toLowerCase().includes(keyword)) : allCities;
 
-                    // 更新地图高亮（只高亮已选的）
                     myChart.setOption({ series: [{ data: selectedCities.map(name => ({ name: name, value: 1 })) }] });
 
-                    // 更新统计（只统计已选的）
                     const cityCount = selectedCities.length;
                     if (cityCount === 0) {
                         statsCounter.textContent = '暂无足迹';
@@ -114,7 +185,6 @@
                         statsCounter.textContent = `已点亮 ${provinceCount} 个省份 / ${cityCount} 座城市`;
                     }
 
-                    // 更新侧边栏（显示所有城市，并标记已选的）
                     renderList(citiesToRenderInList);
                 }
 
@@ -134,12 +204,11 @@
                         return acc;
                     }, {});
 
-                    const sortedProvinces = Object.keys(groupedByProvince).sort(); // 按省份字母排序
+                    const sortedProvinces = Object.keys(groupedByProvince).sort();
                     sortedProvinces.forEach(province => {
                         const cities = groupedByProvince[province];
                         const provinceDiv = document.createElement('div');
                         provinceDiv.className = 'province';
-                        // 【修正】省份统计显示的是当前筛选结果下的城市数
                         provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
                         const citySubListDiv = document.createElement('div');
                         citySubListDiv.className = 'city-list';
@@ -152,10 +221,8 @@
                         cities.forEach(cityName => {
                             const cityDiv = document.createElement('div');
                             cityDiv.className = 'city';
-                            // 【修正】为已点亮的城市添加特殊样式
                             if (selectedCities.includes(cityName)) {
-                                cityDiv.style.borderColor = '#5cacec';
-                                cityDiv.style.backgroundColor = '#eaf6ff';
+                                cityDiv.classList.add('selected');
                             }
                             cityDiv.innerHTML = `<div class="city-name">${cityName}</div>`;
                             cityDiv.addEventListener('click', (e) => {
@@ -169,13 +236,18 @@
                     });
                 }
                 
-                // ... (expandCollapseBtn, searchInput 事件监听器不变) ...
+                expandCollapseBtn.addEventListener('click', () => {
+                    isAllExpanded = !isAllExpanded;
+                    expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
+                    document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
+                    document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
+                });
                 
-                // --- 初始加载 ---
+                searchInput.addEventListener('input', updateAndRender);
+                
                 loadDataFromStorage();
                 updateAndRender();
                 
-                // 存储初始视图
                 const initialOption = myChart.getOption();
                 initialZoom = initialOption.series[0].zoom;
                 initialCenter = initialOption.series[0].center;
@@ -187,5 +259,6 @@
             window.addEventListener('resize', () => myChart.resize());
         });
     </script>
+    <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
 </body>
 </html>
