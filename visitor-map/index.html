@@ -13,9 +13,44 @@
         background-color: #f4f7f9; display: flex; flex-direction: column;
         overflow: hidden;
     }
-    .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
-    .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
+    .header-container { 
+        position: relative; /* 为内部绝对定位的按钮提供基准 */
+        text-align: center; 
+        padding: 15px 20px; 
+        flex-shrink: 0; 
+        background: #fff; 
+        border-bottom: 1px solid #eee; 
+    }
+    .header-container h1 { 
+        margin: 0; 
+        font-size: 1.8rem; 
+        font-weight: 600; 
+        color: #2c3e50;
+        padding: 0 60px; /* 为两侧按钮留出空间 */
+        box-sizing: border-box;
+    }
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
+
+    /* 【新功能】返回主-页按钮样式 */
+    .home-link-btn {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 6px 14px;
+        background-color: #f0f2f5;
+        color: #555;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .home-link-btn:hover {
+        background-color: #e4e6e9;
+        color: #333;
+    }
+
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
     #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
     #chinaMap { width: 100%; height: 100%; }
@@ -59,11 +94,23 @@
         .page-container { flex-direction: column; height: auto; overflow: visible; }
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
+        .home-link-btn {
+            padding: 4px 10px;
+            font-size: 13px;
+            left: 15px;
+        }
+        .header-container h1 {
+            padding: 0 50px;
+        }
     }
 </style>
 </head>
 <body>
     <div class="header-container">
+        <!-- 【新功能】返回主-页按钮 -->
+        <!-- 重要：请将 href="/" 替换为您主-页的实际链接 -->
+        <a href="https://mrbluegeo.xyz" class="home-link-btn">主页</a>
+
         <h1>点亮你的中国足迹</h1>
         <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
     </div>
@@ -195,7 +242,6 @@
                     name: city,
                     itemStyle: {
                         areaColor: '#5cacec',
-                        // 【最终边界修正】
                         borderColor: '#4a90e2', 
                         borderWidth: 1
                     }
