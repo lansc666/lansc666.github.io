@@ -153,15 +153,11 @@
             }
 
             function initializeMapAndFirstRender() {
-                const initialRegions = Array.from(selectedCities).map(city => ({
-                    name: city,
-                    itemStyle: { areaColor: '#5cacec', borderColor: '#4a90e2' }
-                }));
-
+                const initialRegions = generateRegions();
                 const option = {
                     tooltip: {
-                        show: !isMobile, // 电脑端显示，移动端隐藏
-                        trigger: 'item',
+                        show: true, // Tooltip组件本身需要启用
+                        trigger: isMobile ? 'none' : 'item', // 电脑端悬浮触发，手机端不自动触发
                         formatter: '{b}',
                         position: 'top',
                         backgroundColor: 'rgba(0,0,0,0.7)',
@@ -187,39 +183,39 @@
                     },
                     series: []
                 };
-
                 myChart.setOption(option, true);
                 initialOption = myChart.getOption();
-
-                // 【交互修正】将点击事件处理移到初始化之后
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
-                        // 如果是移动端，显示一个临时的 Tooltip 作为确认
                         if (isMobile) {
                             myChart.dispatchAction({
                                 type: 'showTip',
                                 name: params.name
                             });
-                            // 1.5秒后自动隐藏
                             setTimeout(() => {
                                 myChart.dispatchAction({ type: 'hideTip' });
-                            }, 1500);
+                            }, 750); // 【交互修正】停留时间改为0.75秒
                         }
-                        // 正常的点亮/取消逻辑
                         toggleCity(params.name);
                     }
                 });
             }
-
-            // 这个函数现在只负责更新颜色，不再处理标签
-            function updateMapColor() {
-                const regions = Array.from(selectedCities).map(city => ({
+            
+            // 【边框修正】辅助函数，生成高亮区域的样式
+            function generateRegions() {
+                return Array.from(selectedCities).map(city => ({
                     name: city,
                     itemStyle: {
                         areaColor: '#5cacec',
-                        borderColor: '#4a90e2'
+                        borderColor: '#4a90e2', // 使用更明确的深色边框
+                        borderWidth: 1.5      // 将边框加粗一点点
                     }
                 }));
+            }
+
+            // 更新地图的函数现在使用这个辅助函数
+            function updateMapColor() {
+                const regions = generateRegions();
                 myChart.setOption({ geo: { regions: regions } });
             }
 
