@@ -11,7 +11,7 @@
         margin: 0; padding: 0; height: 100vh; width: 100%;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         background-color: #f4f7f9; display: flex; flex-direction: column;
-        overflow: hidden; /* 桌面端，保持单页应用感，禁止滚动 */
+        overflow: hidden;
     }
     .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
@@ -53,7 +53,7 @@
     #clear-map-btn { width: 100%; padding: 10px; background-color: #ff4757; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
     #clear-map-btn:hover { background-color: #ff6b81; }
     .busuanzi-container { margin-bottom: 10px; font-size: 12px; color: #999; display: flex; justify-content: center; gap: 10px; }
-
+    
     @media (max-width: 900px) {
         body, html { height: auto; overflow: auto; }
         .page-container { flex-direction: column; height: auto; overflow: visible; }
@@ -151,10 +151,8 @@
                         show: true, 
                         trigger: isMobile ? 'none' : 'item',
                         formatter: '{b}',
-                        position: 'top',
-                        backgroundColor: 'rgba(0,0,0,0.7)',
-                        borderColor: '#333',
-                        textStyle: { color: '#fff' }
+                        // 【Tooltip样式修正】移除自定义样式，回归默认白色底
+                        position: 'top'
                     },
                     geo: {
                         map: MAP_NAME,
@@ -182,7 +180,6 @@
                         if (isMobile) {
                             myChart.dispatchAction({
                                 type: 'showTip',
-                                seriesIndex: 0, // 必须指定 seriesIndex 或 geoIndex
                                 name: params.name
                             });
                             setTimeout(() => {
@@ -195,12 +192,14 @@
             }
             
             function generateRegions() {
+                const highlightColor = '#5cacec'; // 统一定义高亮色
                 return Array.from(selectedCities).map(city => ({
                     name: city,
                     itemStyle: {
-                        areaColor: '#5cacec',
-                        // 【虚边修正】在高亮时，不再绘制边框，让填充色自己形成清晰边界
-                        borderWidth: 0
+                        areaColor: highlightColor,
+                        // 【边界缺失修正】将边框颜色设为与填充色相同
+                        borderColor: highlightColor,
+                        borderWidth: 1 // 保持与默认边框一样的宽度
                     }
                 }));
             }
