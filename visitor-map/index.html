@@ -13,8 +13,12 @@
         background-color: #f4f7f9; display: flex; flex-direction: column;
         overflow: hidden;
     }
-    .header-container { 
-        position: relative; /* 为内部绝对定位的按钮提供基准 */
+    
+    /* 【移动端布局修正】使用Flexbox重构Header */
+    .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         text-align: center; 
         padding: 15px 20px; 
         flex-shrink: 0; 
@@ -23,32 +27,37 @@
     }
     .header-container h1 { 
         margin: 0; 
-        font-size: 1.8rem; 
+        flex-grow: 1; /* 占据剩余空间 */
+        font-size: 1.6rem; /* 稍微缩小字体以适应移动端 */
         font-weight: 600; 
         color: #2c3e50;
-        padding: 0 60px; /* 为两侧按钮留出空间 */
-        box-sizing: border-box;
+        padding: 0 10px; /* 增加一些水平内边距 */
     }
-    .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
+    .header-container p { 
+        display: none; /* 在新的Flex布局下，副标题会影响居中，暂时隐藏，或后续可考虑放到H1下方 */
+    }
 
-    /* 【新功能】返回主-页按钮样式 */
-    .home-link-btn {
-        position: absolute;
-        left: 20px;
-        top: 50%;
-        transform: translateY(-50%);
+    .home-link-btn, .header-placeholder {
         padding: 6px 14px;
+        font-size: 14px;
+        flex-shrink: 0; /* 防止被压缩 */
+    }
+
+    .home-link-btn {
         background-color: #f0f2f5;
         color: #555;
         border-radius: 6px;
         text-decoration: none;
-        font-size: 14px;
         font-weight: 500;
         transition: all 0.2s ease;
     }
     .home-link-btn:hover {
         background-color: #e4e6e9;
         color: #333;
+    }
+    /* 右侧占位符，保证标题绝对居中 */
+    .header-placeholder {
+        visibility: hidden;
     }
 
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
@@ -94,25 +103,19 @@
         .page-container { flex-direction: column; height: auto; overflow: visible; }
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
-        .home-link-btn {
-            padding: 4px 10px;
-            font-size: 13px;
-            left: 15px;
-        }
-        .header-container h1 {
-            padding: 0 50px;
-        }
+        .header-container { padding: 10px 15px; }
+        .home-link-btn, .header-placeholder { padding: 4px 10px; font-size: 13px; }
+        .header-container h1 { font-size: 1.4rem; }
     }
 </style>
 </head>
 <body>
     <div class="header-container">
-        <!-- 【新功能】返回主-页按钮 -->
-        <!-- 重要：请将 href="/" 替换为您主-页的实际链接 -->
-        <a href="https://mrbluegeo.xyz" class="home-link-btn">主页</a>
-
+        <!-- 【移动端布局修正】HTML结构调整为 左-中-右 -->
+        <a href="/" class="home-link-btn">主页</a>
         <h1>点亮你的中国足迹</h1>
-        <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
+        <!-- 这个占位符是为了让标题完美居中，它在视觉上是看不见的 -->
+        <div class="header-placeholder">主页</div>
     </div>
     <div class="page-container">
         <div id="map-container">
