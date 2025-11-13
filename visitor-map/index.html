@@ -151,7 +151,6 @@
                         show: true, 
                         trigger: isMobile ? 'none' : 'item',
                         formatter: '{b}',
-                        // 【Tooltip样式修正】移除自定义样式，回归默认白色底
                         position: 'top'
                     },
                     geo: {
@@ -192,14 +191,13 @@
             }
             
             function generateRegions() {
-                const highlightColor = '#5cacec'; // 统一定义高亮色
                 return Array.from(selectedCities).map(city => ({
                     name: city,
                     itemStyle: {
-                        areaColor: highlightColor,
-                        // 【边界缺失修正】将边框颜色设为与填充色相同
-                        borderColor: highlightColor,
-                        borderWidth: 1 // 保持与默认边框一样的宽度
+                        areaColor: '#5cacec',
+                        // 【最终边界修正】使用比填充色稍深的同色系边框
+                        borderColor: '#4a90e2', 
+                        borderWidth: 1
                     }
                 }));
             }
