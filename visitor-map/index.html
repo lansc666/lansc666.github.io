@@ -6,17 +6,12 @@
     <title>点亮你的中国足迹地图</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-    /* CSS部分保持不变，但已确认移动端滚动相关的代码是正确的 */
+    /* --- 全局与布局样式 --- */
     body, html {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        width: 100%;
+        margin: 0; padding: 0; height: 100vh; width: 100%;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        background-color: #f4f7f9;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden; /* 桌面端禁止滚动 */
+        background-color: #f4f7f9; display: flex; flex-direction: column;
+        overflow: hidden; /* 桌面端，保持单页应用感，禁止滚动 */
     }
     .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
@@ -58,13 +53,20 @@
     #clear-map-btn { width: 100%; padding: 10px; background-color: #ff4757; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
     #clear-map-btn:hover { background-color: #ff6b81; }
     .busuanzi-container { margin-bottom: 10px; font-size: 12px; color: #999; display: flex; justify-content: center; gap: 10px; }
-    
-    /* 【滑动修正】确保移动端可以正常滚动 */
+
+    /* 【滑动修正】 */
     @media (max-width: 900px) {
-        .page-container { flex-direction: column; }
+        body, html {
+            height: auto; /* 允许高度随内容增长 */
+            overflow: auto; /* 启用页面滚动 */
+        }
+        .page-container {
+            flex-direction: column;
+            height: auto; /* 允许容器高度自适应 */
+            overflow: visible; /* 不隐藏溢出内容 */
+        }
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
-        body, html { overflow: auto; }
     }
 </style>
 </head>
@@ -102,16 +104,14 @@
             </div>
         </div>
     </div>
+
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const GEOJSON_URL = "/visitor-map/city_merged.geojson";
             const CITYLIST_URL = "/visitor-map/citylist.json";
             const MAP_NAME = 'my-footprint-map';
-
-            // 【新功能】判断设备类型
             const isMobile = window.innerWidth <= 900;
-
             const domMap = document.getElementById('chinaMap');
             const domList = document.getElementById('listContent');
             const domSearch = document.getElementById('search');
@@ -153,13 +153,20 @@
             }
 
             function initializeMapAndFirstRender() {
-                const initialRegions = generateRegions(); // 使用新的辅助函数生成regions
+                const initialRegions = Array.from(selectedCities).map(city => ({
+                    name: city,
+                    itemStyle: { areaColor: '#5cacec', borderColor: '#4a90e2' }
+                }));
+
                 const option = {
-                    // 【新功能】根据设备类型，动态设置tooltip
                     tooltip: {
-                        show: !isMobile, // 电脑端显示，移动端不显示
+                        show: !isMobile, // 电脑端显示，移动端隐藏
                         trigger: 'item',
-                        formatter: '{b}'
+                        formatter: '{b}',
+                        position: 'top',
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        borderColor: '#333',
+                        textStyle: { color: '#fff' }
                     },
                     geo: {
                         map: MAP_NAME,
@@ -180,42 +187,39 @@
                     },
                     series: []
                 };
+
                 myChart.setOption(option, true);
                 initialOption = myChart.getOption();
+
+                // 【交互修正】将点击事件处理移到初始化之后
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
+                        // 如果是移动端，显示一个临时的 Tooltip 作为确认
+                        if (isMobile) {
+                            myChart.dispatchAction({
+                                type: 'showTip',
+                                name: params.name
+                            });
+                            // 1.5秒后自动隐藏
+                            setTimeout(() => {
+                                myChart.dispatchAction({ type: 'hideTip' });
+                            }, 1500);
+                        }
+                        // 正常的点亮/取消逻辑
                         toggleCity(params.name);
                     }
                 });
             }
 
-            // 【新功能】这是一个新的辅助函数，用于根据设备类型生成不同的regions配置
-            function generateRegions() {
-                return Array.from(selectedCities).map(city => {
-                    const regionConfig = {
-                        name: city,
-                        itemStyle: {
-                            areaColor: '#5cacec',
-                            borderColor: '#4a90e2'
-                        }
-                    };
-                    // 如果是移动端，为选中的城市添加label显示
-                    if (isMobile) {
-                        regionConfig.label = {
-                            show: true,
-                            color: '#fff',
-                            fontSize: 10,
-                            textShadowColor: '#333',
-                            textShadowBlur: 3
-                        };
-                    }
-                    return regionConfig;
-                });
-            }
-
-            // 更新地图颜色和标签的函数现在也使用新的辅助函数
+            // 这个函数现在只负责更新颜色，不再处理标签
             function updateMapColor() {
-                const regions = generateRegions();
+                const regions = Array.from(selectedCities).map(city => ({
+                    name: city,
+                    itemStyle: {
+                        areaColor: '#5cacec',
+                        borderColor: '#4a90e2'
+                    }
+                }));
                 myChart.setOption({ geo: { regions: regions } });
             }
 
