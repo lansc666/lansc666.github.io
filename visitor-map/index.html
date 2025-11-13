@@ -13,57 +13,9 @@
         background-color: #f4f7f9; display: flex; flex-direction: column;
         overflow: hidden;
     }
-    
-    /* 【主页按钮修正】使用Flexbox重构Header以实现完美对齐 */
-    .header-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        text-align: center; 
-        padding: 15px 20px; 
-        flex-shrink: 0; 
-        background: #fff; 
-        border-bottom: 1px solid #eee; 
-    }
-    .title-wrapper {
-        flex-grow: 1;
-        text-align: center;
-        padding: 0 10px;
-    }
-    .header-container h1 { 
-        margin: 0; 
-        font-size: 1.8rem;
-        font-weight: 600; 
-        color: #2c3e50;
-    }
-    .header-container p { 
-        margin: 5px 0 0; 
-        color: #7f8c8d; 
-        font-size: 0.9rem; 
-    }
-
-    .home-link-btn, .header-placeholder {
-        padding: 6px 14px;
-        font-size: 14px;
-        flex-shrink: 0; /* 防止被压缩 */
-    }
-
-    .home-link-btn {
-        background-color: #f0f2f5;
-        color: #555;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-    .home-link-btn:hover {
-        background-color: #e4e6e9;
-        color: #333;
-    }
-    .header-placeholder {
-        visibility: hidden; /* 隐形占位符 */
-    }
-
+    .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
+    .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
+    .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
     #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
     #chinaMap { width: 100%; height: 100%; }
@@ -107,22 +59,13 @@
         .page-container { flex-direction: column; height: auto; overflow: visible; }
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
-        .header-container { padding: 10px 15px; }
-        .home-link-btn, .header-placeholder { padding: 4px 10px; font-size: 13px; }
-        .header-container h1 { font-size: 1.4rem; }
-        .header-container p { font-size: 0.75rem; margin-top: 2px; }
     }
 </style>
 </head>
 <body>
     <div class="header-container">
-        <!-- 【主页按钮修正】HTML结构调整为 左-中-右 -->
-        <a href="/" class="home-link-btn">主页</a>
-        <div class="title-wrapper">
-            <h1>点亮你的中国足迹</h1>
-            <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
-        </div>
-        <div class="header-placeholder">主页</div>
+        <h1>点亮你的中国足迹</h1>
+        <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
     </div>
     <div class="page-container">
         <div id="map-container">
@@ -252,6 +195,7 @@
                     name: city,
                     itemStyle: {
                         areaColor: '#5cacec',
+                        // 【最终边界修正】
                         borderColor: '#4a90e2', 
                         borderWidth: 1
                     }
