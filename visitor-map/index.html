@@ -14,6 +14,7 @@
         overflow: hidden;
     }
     
+    /* 【主页按钮修正】使用Flexbox重构Header以实现完美对齐 */
     .header-container {
         display: flex;
         align-items: center;
@@ -44,7 +45,7 @@
     .home-link-btn, .header-placeholder {
         padding: 6px 14px;
         font-size: 14px;
-        flex-shrink: 0;
+        flex-shrink: 0; /* 防止被压缩 */
     }
 
     .home-link-btn {
@@ -60,7 +61,7 @@
         color: #333;
     }
     .header-placeholder {
-        visibility: hidden;
+        visibility: hidden; /* 隐形占位符 */
     }
 
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
@@ -109,17 +110,13 @@
         .header-container { padding: 10px 15px; }
         .home-link-btn, .header-placeholder { padding: 4px 10px; font-size: 13px; }
         .header-container h1 { font-size: 1.4rem; }
-        
-        /* 【文字说明恢复】在移动端，不再隐藏副标题，而是调整其样式 */
-        .header-container p {
-            font-size: 0.75rem; /* 减小字号 */
-            margin-top: 2px;      /* 减小与主标题的间距 */
-        }
+        .header-container p { font-size: 0.75rem; margin-top: 2px; }
     }
 </style>
 </head>
 <body>
     <div class="header-container">
+        <!-- 【主页按钮修正】HTML结构调整为 左-中-右 -->
         <a href="/" class="home-link-btn">主页</a>
         <div class="title-wrapper">
             <h1>点亮你的中国足迹</h1>
