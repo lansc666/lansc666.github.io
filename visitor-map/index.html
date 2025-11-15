@@ -15,41 +15,39 @@
     }
     /* --- MODIFIED START --- */
     .header-container { 
+        position: relative; /* 1. 为按钮的绝对定位提供基准 */
         text-align: center; 
-        padding: 15px 20px;
+        padding: 15px 50px; /* 2. 增加左右内边距，为绝对定位的按钮留出空间 */
         flex-shrink: 0; 
         background: #fff; 
         border-bottom: 1px solid #eee; 
     }
-    .title-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 12px; /* 控制图标和标题之间的距离 */
-    }
     .home-btn {
+        position: absolute; /* 3. 使用绝对定位 */
+        left: 15px; /* 4. 定位到左侧 */
+        top: 50%;   /* 5. 垂直居中 */
+        transform: translateY(-50%);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 38px;
-        height: 38px;
+        width: 34px;  /* 6. 缩小按钮尺寸 */
+        height: 34px;
         color: #495057;
         text-decoration: none;
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
-        border-radius: 50%; /* 圆形按钮 */
+        border-radius: 50%;
         transition: all 0.2s ease;
-        flex-shrink: 0; /* 防止按钮被压缩 */
     }
     .home-btn:hover {
         background-color: #e9ecef;
-        transform: scale(1.05);
+        border-color: #ced4da;
     }
     .home-btn i {
-        font-size: 18px;
+        font-size: 16px; /* 7. 缩小图标尺寸 */
     }
-    .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
     /* --- MODIFIED END --- */
+    .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
     #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
@@ -96,21 +94,17 @@
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
         
         /* --- MODIFIED START for Mobile --- */
-        .header-container h1 {
-            font-size: 1.5rem; /* 在移动端缩小主标题 */
-        }
-        .header-container p {
-            font-size: 0.8rem; /* 在移动端缩小副标题 */
+        .header-container {
+            padding: 15px 45px; /* 移动端减少左右内边距 */
         }
         .home-btn {
-            width: 34px;
-            height: 34px;
+            left: 10px; /* 移动端按钮更靠近边缘 */
         }
-        .home-btn i {
-            font-size: 16px;
+        .header-container h1 {
+            font-size: 1.5rem; 
         }
-        .title-wrapper {
-            gap: 10px; /* 在移动端缩小图标和标题的间距 */
+        .header-container p {
+            font-size: 0.8rem;
         }
         /* --- MODIFIED END for Mobile --- */
     }
@@ -118,13 +112,11 @@
 </head>
 <body>
     <div class="header-container">
-        <!-- Re-structured Header -->
-        <div class="title-wrapper">
-            <a href="/" class="home-btn" title="返回主页">
-                <i class="fas fa-map-marked-alt"></i>
-            </a>
-            <h1>点亮你的中国足迹</h1>
-        </div>
+        <!-- Modified HTML -->
+        <a href="/" class="home-btn" title="返回主页">
+            <i class="fas fa-home"></i> <!-- Changed Icon -->
+        </a>
+        <h1>点亮你的中国足迹</h1>
         <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
     </div>
     <div class="page-container">
@@ -341,4 +333,4 @@
     </script>
     <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
 </body>
-</html>
+</html>```
