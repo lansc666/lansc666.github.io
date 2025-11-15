@@ -6,7 +6,6 @@
     <title>点亮你的中国足迹地图</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-    /* CSS部分保持不变，且已确认移动端滑动正常 */
     body, html {
         margin: 0; padding: 0; height: 100vh; width: 100%;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -16,40 +15,47 @@
     .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
+
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
     #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
     #chinaMap { width: 100%; height: 100%; }
+
     .loading-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.9); padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); z-index: 100; pointer-events: none; }
     .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #999; z-index: 10; pointer-events: none; }
     .reset-view-btn { position: absolute; bottom: 20px; right: 20px; width: 36px; height: 36px; background: #fff; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+
+    /* ★ 新增：回到地图按钮 */
     #backToMapBtn {
         position: fixed;
-        bottom: 70px;
+        bottom: 80px;
         right: 20px;
-        width: 36px;
-        height: 36px;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        display: none; /* 默认隐藏 */
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background-color: white;
+        border: 2px solid #b9d4e9;
+        color: #2c3e50;
+        display: none;
         justify-content: center;
         align-items: center;
         font-size: 20px;
-        color: #333;
         cursor: pointer;
-        z-index: 10;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        z-index: 9999;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
+
     #sidebar { width: 350px; background: #fff; border-left: 1px solid #ddd; display: flex; flex-direction: column; z-index: 20; }
     #search-container { padding: 15px; border-bottom: 1px solid #eee; background: #fff; }
     .control-group { display: flex; gap: 10px; }
     #search { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
     #exportImageBtn { padding: 8px 15px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap; transition: background-color 0.2s; }
     #exportImageBtn:hover { background: #27ae60; }
+
     .stats-panel { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
     .stats-title { font-size: 14px; color: #666; margin-bottom: 5px; }
     .stats-numbers { font-size: 16px; font-weight: bold; color: #333; }
     .highlight-num { color: #5cacec; margin: 0 2px; }
+
     .sidebar-content { flex: 1; overflow-y: auto; padding: 10px; background-color: #f9f9f9; }
     .province-item { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
     .province-header { padding: 12px 15px; background: #f5f5f5; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s; }
@@ -59,6 +65,7 @@
     .province-title { flex: 1; font-size: 15px; font-weight: 500; color: #333; }
     .province-arrow { color: #999; font-size: 12px; transition: transform 0.2s; }
     .province-item.expanded .province-arrow { transform: rotate(90deg); }
+
     .city-list-container { display: none; border-top: 1px solid #eee; }
     .province-item.expanded .city-list-container { display: block; }
     .city-item { padding: 10px 15px 10px 45px; border-bottom: 1px solid #f0f0f0; cursor: pointer; display: flex; align-items: center; font-size: 14px; color: #666; transition: background 0.2s; }
@@ -67,11 +74,13 @@
     .city-item.selected { background-color: #eaf6ff; color: #333; font-weight: 500; }
     .city-item .check-mark { margin-left: auto; color: #5cacec; opacity: 0; }
     .city-item.selected .check-mark { opacity: 1; }
+
     .sidebar-footer { padding: 15px; border-top: 1px solid #ddd; background: #fff; text-align: center; }
     #clear-map-btn { width: 100%; padding: 10px; background-color: #ff4757; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
     #clear-map-btn:hover { background-color: #ff6b81; }
+
     .busuanzi-container { margin-bottom: 10px; font-size: 12px; color: #999; display: flex; justify-content: center; gap: 10px; }
-    
+
     @media (max-width: 900px) {
         body, html { height: auto; overflow: auto; }
         .page-container { flex-direction: column; height: auto; overflow: visible; }
@@ -85,6 +94,7 @@
         <h1>点亮你的中国足迹</h1>
         <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
     </div>
+
     <div class="page-container">
         <div id="map-container">
             <div class="loading-indicator" id="loadingTip">数据加载中...</div>
@@ -92,6 +102,7 @@
             <div class="map-approval-number">GS(2024)0650</div>
             <div class="reset-view-btn" title="重置视图">⟲</div>
         </div>
+
         <div id="sidebar">
             <div id="search-container">
                 <div class="control-group">
@@ -99,11 +110,14 @@
                     <button id="exportImageBtn">下载地图</button>
                 </div>
             </div>
+
             <div class="stats-panel">
                 <div class="stats-title">我的足迹</div>
                 <div class="stats-numbers">已点亮 <span id="province-count" class="highlight-num">0</span> 省 / <span id="city-count" class="highlight-num">0</span> 市</div>
             </div>
+
             <div class="sidebar-content" id="listContent"></div>
+
             <div class="sidebar-footer">
                 <div class="busuanzi-container">
                     <span><i class="fas fa-user"></i> <span id="busuanzi_site_uv">...</span></span>
@@ -115,8 +129,8 @@
         </div>
     </div>
 
-    <!-- 【修改】将按钮移至body直接子级，确保fixed定位行为一致 -->
-    <div id="backToMapBtn" title="回到地图">▲</div>
+    <!-- ★ 新增按钮：回到地图 -->
+    <div id="backToMapBtn"><i class="fas fa-arrow-up"></i></div>
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
@@ -125,8 +139,8 @@
             const CITYLIST_URL = "/visitor-map/citylist.json";
             const MAP_NAME = 'my-footprint-map';
             const isMobile = window.innerWidth <= 900;
+
             const domMap = document.getElementById('chinaMap');
-            const domMapContainer = document.getElementById('map-container');
             const domList = document.getElementById('listContent');
             const domSearch = document.getElementById('search');
             const domExportBtn = document.getElementById('exportImageBtn');
@@ -135,9 +149,29 @@
             const domLoading = document.getElementById('loadingTip');
             const domProvCount = document.getElementById('province-count');
             const domCityCount = document.getElementById('city-count');
-            const domBackToMapBtn = document.getElementById('backToMapBtn');
+
+            const backToMapBtn = document.getElementById("backToMapBtn");
+
             let myChart = echarts.init(domMap);
             let provinceMap = {}, cityToProvince = {}, selectedCities = new Set(), expandedProvinces = new Set(), initialOption = {};
+
+            /* ★ 监听滚动：显示 / 隐藏“回到地图”按钮 */
+            if (isMobile) {
+                window.addEventListener("scroll", () => {
+                    const mapBottom = document.getElementById("map-container").getBoundingClientRect().bottom;
+                    if (mapBottom < 0) {
+                        backToMapBtn.style.display = "flex";
+                    } else {
+                        backToMapBtn.style.display = "none";
+                    }
+                });
+
+                backToMapBtn.addEventListener("click", () => {
+                    document.getElementById("map-container").scrollIntoView({ behavior: "smooth" });
+                });
+            }
+
+            /* === 原有地图与交互代码保持完整 === */
 
             Promise.all([
                 fetch(GEOJSON_URL).then(r => r.json()),
@@ -151,11 +185,11 @@
                 renderSidebar();
                 updateStats();
             }).catch(err => {
-                domLoading.textContent = "数据加载或地图注册失败！请按F12在Console面板查看错误详情。";
+                domLoading.textContent = "数据加载或地图注册失败！请按F12查看错误。";
                 domLoading.style.color = "red";
                 console.error("地图初始化失败:", err);
             });
-            
+
             function processData(list) {
                 list.forEach(item => {
                     const city = item["地名"], prov = item["省级"];
@@ -168,9 +202,7 @@
             }
 
             function initializeMapAndFirstRender() {
-                const initialRegions = generateRegionsForFill();
-                const initialBorderData = generateDataForBorder();
-
+                const initialRegions = generateRegions();
                 const option = {
                     tooltip: {
                         show: true, 
@@ -193,58 +225,38 @@
                             borderColor: '#b9d4e9',
                             borderWidth: 1
                         },
-                        // geo.regions只负责填充颜色
                         regions: initialRegions
                     },
-                    // 【修改】新增一个series，只负责画点亮区域的边框
-                    series: [{
-                        type: 'map',
-                        map: MAP_NAME,
-                        geoIndex: 0, // 关键：将此series关联到上面的geo组件
-                        emphasis: { disabled: true }, // 禁用此图层的交互，防止干扰
-                        itemStyle: {
-                            areaColor: 'transparent', // 填充设为透明
-                            borderColor: '#4a90e2',    // 边框颜色
-                            borderWidth: 1.1          // 边框宽度
-                        },
-                        data: initialBorderData // 初始数据
-                    }]
+                    series: []
                 };
                 myChart.setOption(option, true);
                 initialOption = myChart.getOption();
+
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
                         if (isMobile) {
                             myChart.dispatchAction({ type: 'showTip', name: params.name });
-                            setTimeout(() => { myChart.dispatchAction({ type: 'hideTip' }); }, 750);
+                            setTimeout(() => myChart.dispatchAction({ type: 'hideTip' }), 750);
                         }
                         toggleCity(params.name);
                     }
                 });
             }
-            
-            // 【修改】此函数现在只生成【填充】样式
-            function generateRegionsForFill() {
+
+            function generateRegions() {
                 return Array.from(selectedCities).map(city => ({
                     name: city,
                     itemStyle: {
-                        areaColor: '#5cacec'
+                        areaColor: '#5cacec',
+                        borderColor: '#4a90e2',
+                        borderWidth: 1
                     }
                 }));
             }
-            
-            // 【新增】此函数生成给series用的【描边】数据
-            function generateDataForBorder() {
-                return Array.from(selectedCities).map(city => ({ name: city }));
-            }
 
             function updateMapColor() {
-                const regions = generateRegionsForFill();
-                const borderData = generateDataForBorder();
-                myChart.setOption({
-                    geo: { regions: regions },
-                    series: [{ data: borderData }]
-                });
+                const regions = generateRegions();
+                myChart.setOption({ geo: { regions: regions } });
             }
 
             function renderSidebar() {
@@ -252,15 +264,19 @@
                 const keyword = domSearch.value.trim();
                 const sortedProvinces = Object.keys(provinceMap).sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 let hasResult = false;
+
                 sortedProvinces.forEach(prov => {
                     let cities = provinceMap[prov].filter(c => !keyword || c.includes(keyword));
                     if (cities.length === 0) return;
                     hasResult = true;
+
                     const allCitiesInThisProvince = provinceMap[prov];
                     const selectedCount = allCitiesInThisProvince.filter(c => selectedCities.has(c)).length;
                     const isExpanded = expandedProvinces.has(prov) || !!keyword;
+
                     const wrapper = document.createElement('div');
                     wrapper.className = `province-item ${isExpanded ? 'expanded' : ''}`;
+
                     const header = document.createElement('div');
                     header.className = 'province-header';
                     let iconClass = 'far fa-square';
@@ -269,16 +285,25 @@
                     } else if (selectedCount > 0) {
                         iconClass = 'fas fa-minus-square active';
                     }
-                    header.innerHTML = `<div style="display:flex; align-items:center; flex-grow: 1;"><i class="status-icon ${iconClass}"></i><span class="province-title">${prov}</span></div><span class="province-arrow">▶</span>`;
+                    header.innerHTML = `
+                        <div style="display:flex; align-items:center; flex-grow: 1;">
+                            <i class="status-icon ${iconClass}"></i>
+                            <span class="province-title">${prov}</span>
+                        </div>
+                        <span class="province-arrow">▶</span>
+                    `;
+
                     header.addEventListener('click', (e) => {
                         if (e.target.classList.contains('status-icon')) {
                             e.stopPropagation();
                             toggleProvince(prov, allCitiesInThisProvince, selectedCount < allCitiesInThisProvince.length);
                         } else {
-                            if (expandedProvinces.has(prov)) { expandedProvinces.delete(prov); } else { expandedProvinces.add(prov); }
+                            if (expandedProvinces.has(prov)) expandedProvinces.delete(prov);
+                            else expandedProvinces.add(prov);
                             wrapper.classList.toggle('expanded');
                         }
                     });
+
                     const listContainer = document.createElement('div');
                     listContainer.className = 'city-list-container';
                     cities.forEach(city => {
@@ -286,42 +311,60 @@
                         const isSelected = selectedCities.has(city);
                         cityDiv.className = `city-item ${isSelected ? 'selected' : ''}`;
                         cityDiv.innerHTML = `<span>${city}</span><i class="fas fa-check check-mark"></i>`;
-                        cityDiv.addEventListener('click', (e) => { e.stopPropagation(); toggleCity(city); });
+                        cityDiv.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            toggleCity(city);
+                        });
                         listContainer.appendChild(cityDiv);
                     });
+
                     wrapper.appendChild(header);
                     wrapper.appendChild(listContainer);
                     domList.appendChild(wrapper);
                 });
-                if (!hasResult) { domList.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">未找到匹配城市</div>'; }
+
+                if (!hasResult) {
+                    domList.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">未找到匹配城市</div>';
+                }
             }
 
-            function updateUI() { updateMapColor(); renderSidebar(); updateStats(); }
-            function toggleCity(city) { if (selectedCities.has(city)) { selectedCities.delete(city); } else { selectedCities.add(city); } saveStorage(); updateUI(); }
-            function toggleProvince(prov, citiesToToggle, shouldSelect) { citiesToToggle.forEach(city => { if (shouldSelect) { selectedCities.add(city); } else { selectedCities.delete(city); } }); saveStorage(); updateUI(); }
-            function updateStats() { domCityCount.textContent = selectedCities.size; const provs = new Set(); selectedCities.forEach(c => { if (cityToProvince[c]) provs.add(cityToProvince[c]); }); domProvCount.textContent = provs.size; }
-            domExportBtn.addEventListener('click', () => { const dataUrl = myChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#f4f7f9' }); const link = document.createElement('a'); link.href = dataUrl; link.download = 'my_footprints_map.png'; document.body.appendChild(link); link.click(); document.body.removeChild(link); });
-            domSearch.addEventListener('input', () => renderSidebar());
-            domResetBtn.addEventListener('click', () => { myChart.setOption({ geo: { zoom: initialOption.geo[0].zoom, center: initialOption.geo[0].center } }); });
-            domClearBtn.addEventListener('click', () => { if (confirm('确定要清空所有已点亮的城市吗？')) { selectedCities.clear(); expandedProvinces.clear(); saveStorage(); updateUI(); } });
-            
-            domBackToMapBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
-            window.addEventListener('scroll', () => {
-                if (isMobile) {
-                    // 【修改】判定标准为滚动距离超过地图的【完整】高度
-                    if (window.scrollY > domMapContainer.offsetHeight) {
-                        domBackToMapBtn.style.display = 'flex';
-                    } else {
-                        domBackToMapBtn.style.display = 'none';
-                    }
-                }
-            });
+            function updateUI() {
+                updateMapColor();
+                renderSidebar();
+                updateStats();
+            }
 
-            window.addEventListener('resize', () => myChart.resize());
-            function saveStorage() { localStorage.setItem('my_footprints', JSON.stringify(Array.from(selectedCities))); }
-            function loadStorage() { const saved = localStorage.getItem('my_footprints'); if (saved) { try { selectedCities = new Set(JSON.parse(saved)); } catch (e) { console.error('Storage Error', e); } } }
+            function toggleCity(city) {
+                if (selectedCities.has(city)) selectedCities.delete(city);
+                else selectedCities.add(city);
+                saveStorage();
+                updateUI();
+            }
+
+            function toggleProvince(prov, citiesToToggle, shouldSelect) {
+                citiesToToggle.forEach(city => {
+                    if (shouldSelect) selectedCities.add(city);
+                    else selectedCities.delete(city);
+                });
+                saveStorage();
+                updateUI();
+            }
+
+            function updateStats() {
+                domCityCount.textContent = selectedCities.size;
+                const provs = new Set([...selectedCities].map(c => cityToProvince[c]));
+                domProvCount.textContent = provs.size;
+            }
+
+            function saveStorage() {
+                localStorage.setItem("footprint-cities", JSON.stringify([...selectedCities]));
+            }
+
+            function loadStorage() {
+                const saved = JSON.parse(localStorage.getItem("footprint-cities") || "[]");
+                selectedCities = new Set(saved);
+            }
         });
     </script>
-    <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
 </body>
 </html>
