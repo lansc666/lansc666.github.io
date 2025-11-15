@@ -15,40 +15,41 @@
     }
     /* --- MODIFIED START --- */
     .header-container { 
-        position: relative; /* 1. 为按钮的绝对定位提供基准 */
+        position: relative; /* 1. 为绝对定位的子元素提供定位上下文 */
         text-align: center; 
-        padding: 15px 50px; /* 2. 增加左右内边距，为绝对定位的按钮留出空间 */
+        padding: 15px 55px; /* 2. 关键！提供左右内边距，为按钮留出空间，确保标题不会重叠 */
         flex-shrink: 0; 
         background: #fff; 
         border-bottom: 1px solid #eee; 
     }
     .home-btn {
-        position: absolute; /* 3. 使用绝对定位 */
-        left: 15px; /* 4. 定位到左侧 */
-        top: 50%;   /* 5. 垂直居中 */
+        position: absolute;   /* 3. 使用绝对定位，脱离文档流 */
+        left: 15px;           /* 4. 精确定位到左侧 */
+        top: 50%;             /* 5. 垂直居中 */
         transform: translateY(-50%);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 34px;  /* 6. 缩小按钮尺寸 */
+        width: 34px;
         height: 34px;
-        color: #495057;
+        color: #343a40;
         text-decoration: none;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
+        background-color: #f1f3f5;
+        border: 1px solid #e9ecef;
         border-radius: 50%;
         transition: all 0.2s ease;
     }
     .home-btn:hover {
-        background-color: #e9ecef;
-        border-color: #ced4da;
+        background-color: #dee2e6;
     }
     .home-btn i {
-        font-size: 16px; /* 7. 缩小图标尺寸 */
+        font-size: 16px;
     }
-    /* --- MODIFIED END --- */
+    /* 标题和大段文字默认就会居中，无需额外样式 */
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
+    /* --- MODIFIED END --- */
+
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
     #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
     #chinaMap { width: 100%; height: 100%; }
@@ -93,12 +94,11 @@
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
         
-        /* --- MODIFIED START for Mobile --- */
         .header-container {
-            padding: 15px 45px; /* 移动端减少左右内边距 */
+            padding: 15px 50px; /* 移动端稍减内边距 */
         }
         .home-btn {
-            left: 10px; /* 移动端按钮更靠近边缘 */
+            left: 12px; /* 移动端更靠近边缘 */
         }
         .header-container h1 {
             font-size: 1.5rem; 
@@ -106,15 +106,13 @@
         .header-container p {
             font-size: 0.8rem;
         }
-        /* --- MODIFIED END for Mobile --- */
     }
 </style>
 </head>
 <body>
     <div class="header-container">
-        <!-- Modified HTML -->
         <a href="/" class="home-btn" title="返回主页">
-            <i class="fas fa-home"></i> <!-- Changed Icon -->
+            <i class="fas fa-home"></i>
         </a>
         <h1>点亮你的中国足迹</h1>
         <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
