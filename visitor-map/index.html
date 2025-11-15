@@ -22,7 +22,6 @@
     .loading-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.9); padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); z-index: 100; pointer-events: none; }
     .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #999; z-index: 10; pointer-events: none; }
     .reset-view-btn { position: absolute; bottom: 20px; right: 20px; width: 36px; height: 36px; background: #fff; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
-    /* 【新增】回到地图按钮样式 */
     #backToMapBtn {
         position: fixed;
         bottom: 70px;
@@ -91,8 +90,6 @@
             <div class="loading-indicator" id="loadingTip">数据加载中...</div>
             <div id="chinaMap"></div>
             <div class="map-approval-number">GS(2024)0650</div>
-            <!-- 【新增】回到地图按钮 -->
-            <div id="backToMapBtn" title="回到地图">▲</div>
             <div class="reset-view-btn" title="重置视图">⟲</div>
         </div>
         <div id="sidebar">
@@ -118,6 +115,9 @@
         </div>
     </div>
 
+    <!-- 【修改】将按钮移至body直接子级，确保fixed定位行为一致 -->
+    <div id="backToMapBtn" title="回到地图">▲</div>
+
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -126,7 +126,7 @@
             const MAP_NAME = 'my-footprint-map';
             const isMobile = window.innerWidth <= 900;
             const domMap = document.getElementById('chinaMap');
-            const domMapContainer = document.getElementById('map-container'); // 【新增】获取地图容器
+            const domMapContainer = document.getElementById('map-container');
             const domList = document.getElementById('listContent');
             const domSearch = document.getElementById('search');
             const domExportBtn = document.getElementById('exportImageBtn');
@@ -135,7 +135,7 @@
             const domLoading = document.getElementById('loadingTip');
             const domProvCount = document.getElementById('province-count');
             const domCityCount = document.getElementById('city-count');
-            const domBackToMapBtn = document.getElementById('backToMapBtn'); // 【新增】获取回到地图按钮
+            const domBackToMapBtn = document.getElementById('backToMapBtn');
             let myChart = echarts.init(domMap);
             let provinceMap = {}, cityToProvince = {}, selectedCities = new Set(), expandedProvinces = new Set(), initialOption = {};
 
@@ -168,7 +168,9 @@
             }
 
             function initializeMapAndFirstRender() {
-                const initialRegions = generateRegions();
+                const initialRegions = generateRegionsForFill();
+                const initialBorderData = generateDataForBorder();
+
                 const option = {
                     tooltip: {
                         show: true, 
@@ -191,43 +193,58 @@
                             borderColor: '#b9d4e9',
                             borderWidth: 1
                         },
+                        // geo.regions只负责填充颜色
                         regions: initialRegions
                     },
-                    series: []
+                    // 【修改】新增一个series，只负责画点亮区域的边框
+                    series: [{
+                        type: 'map',
+                        map: MAP_NAME,
+                        geoIndex: 0, // 关键：将此series关联到上面的geo组件
+                        emphasis: { disabled: true }, // 禁用此图层的交互，防止干扰
+                        itemStyle: {
+                            areaColor: 'transparent', // 填充设为透明
+                            borderColor: '#4a90e2',    // 边框颜色
+                            borderWidth: 1.1          // 边框宽度
+                        },
+                        data: initialBorderData // 初始数据
+                    }]
                 };
                 myChart.setOption(option, true);
                 initialOption = myChart.getOption();
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
                         if (isMobile) {
-                            myChart.dispatchAction({
-                                type: 'showTip',
-                                name: params.name
-                            });
-                            setTimeout(() => {
-                                myChart.dispatchAction({ type: 'hideTip' });
-                            }, 750);
+                            myChart.dispatchAction({ type: 'showTip', name: params.name });
+                            setTimeout(() => { myChart.dispatchAction({ type: 'hideTip' }); }, 750);
                         }
                         toggleCity(params.name);
                     }
                 });
             }
             
-            function generateRegions() {
+            // 【修改】此函数现在只生成【填充】样式
+            function generateRegionsForFill() {
                 return Array.from(selectedCities).map(city => ({
                     name: city,
                     itemStyle: {
-                        areaColor: '#5cacec',
-                        // 【修改】调整边框颜色和宽度以优化视觉效果
-                        borderColor: '#2c5a89', 
-                        borderWidth: 1.5
+                        areaColor: '#5cacec'
                     }
                 }));
             }
+            
+            // 【新增】此函数生成给series用的【描边】数据
+            function generateDataForBorder() {
+                return Array.from(selectedCities).map(city => ({ name: city }));
+            }
 
             function updateMapColor() {
-                const regions = generateRegions();
-                myChart.setOption({ geo: { regions: regions } });
+                const regions = generateRegionsForFill();
+                const borderData = generateDataForBorder();
+                myChart.setOption({
+                    geo: { regions: regions },
+                    series: [{ data: borderData }]
+                });
             }
 
             function renderSidebar() {
@@ -258,11 +275,7 @@
                             e.stopPropagation();
                             toggleProvince(prov, allCitiesInThisProvince, selectedCount < allCitiesInThisProvince.length);
                         } else {
-                            if (expandedProvinces.has(prov)) {
-                                expandedProvinces.delete(prov);
-                            } else {
-                                expandedProvinces.add(prov);
-                            }
+                            if (expandedProvinces.has(prov)) { expandedProvinces.delete(prov); } else { expandedProvinces.add(prov); }
                             wrapper.classList.toggle('expanded');
                         }
                     });
@@ -273,19 +286,14 @@
                         const isSelected = selectedCities.has(city);
                         cityDiv.className = `city-item ${isSelected ? 'selected' : ''}`;
                         cityDiv.innerHTML = `<span>${city}</span><i class="fas fa-check check-mark"></i>`;
-                        cityDiv.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            toggleCity(city);
-                        });
+                        cityDiv.addEventListener('click', (e) => { e.stopPropagation(); toggleCity(city); });
                         listContainer.appendChild(cityDiv);
                     });
                     wrapper.appendChild(header);
                     wrapper.appendChild(listContainer);
                     domList.appendChild(wrapper);
                 });
-                if (!hasResult) {
-                    domList.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">未找到匹配城市</div>';
-                }
+                if (!hasResult) { domList.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">未找到匹配城市</div>'; }
             }
 
             function updateUI() { updateMapColor(); renderSidebar(); updateStats(); }
@@ -297,14 +305,11 @@
             domResetBtn.addEventListener('click', () => { myChart.setOption({ geo: { zoom: initialOption.geo[0].zoom, center: initialOption.geo[0].center } }); });
             domClearBtn.addEventListener('click', () => { if (confirm('确定要清空所有已点亮的城市吗？')) { selectedCities.clear(); expandedProvinces.clear(); saveStorage(); updateUI(); } });
             
-            // 【新增】回到地图按钮的事件处理
-            domBackToMapBtn.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            domBackToMapBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
             window.addEventListener('scroll', () => {
                 if (isMobile) {
-                    // 当滚动距离超过地图容器高度的一半时显示按钮
-                    if (window.scrollY > domMapContainer.offsetHeight / 2) {
+                    // 【修改】判定标准为滚动距离超过地图的【完整】高度
+                    if (window.scrollY > domMapContainer.offsetHeight) {
                         domBackToMapBtn.style.display = 'flex';
                     } else {
                         domBackToMapBtn.style.display = 'none';
