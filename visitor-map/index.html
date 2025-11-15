@@ -24,7 +24,6 @@
     .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #999; z-index: 10; pointer-events: none; }
     .reset-view-btn { position: absolute; bottom: 20px; right: 20px; width: 36px; height: 36px; background: #fff; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
 
-    /* ★ 新增：回到地图按钮 */
     #backToMapBtn {
         position: fixed;
         bottom: 80px;
@@ -33,7 +32,6 @@
         height: 42px;
         border-radius: 50%;
         background-color: white;
-        /* border: 2px solid #b9d4e9; */
         color: #2c3e50;
         display: none;
         justify-content: center;
@@ -129,7 +127,6 @@
         </div>
     </div>
 
-    <!-- ★ 新增按钮：回到地图 -->
     <div id="backToMapBtn"><i class="fas fa-arrow-up"></i></div>
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
@@ -181,7 +178,7 @@
                 initializeMapAndFirstRender(); 
                 renderSidebar();
                 updateStats();
-                bindEventListeners(); // ★ 绑定所有事件
+                bindEventListeners();
             }).catch(err => {
                 domLoading.textContent = "数据加载或地图注册失败！请按F12查看错误。";
                 domLoading.style.color = "red";
@@ -202,6 +199,11 @@
             function initializeMapAndFirstRender() {
                 const initialRegions = generateRegions();
                 const option = {
+                    // ★ 新增：明确动画配置
+                    animation: true,
+                    animationDurationUpdate: 500, // 数据更新动画的时长
+                    animationEasingUpdate: 'cubicInOut', // 缓动效果
+
                     tooltip: {
                         show: true, 
                         trigger: isMobile ? 'none' : 'item',
@@ -228,13 +230,10 @@
                     series: []
                 };
                 myChart.setOption(option, true);
-                // ★ 关键：在初次渲染后保存初始配置
                 initialOption = myChart.getOption();
             }
 
-            // ★ 新增：将所有事件监听器集中到此函数
             function bindEventListeners() {
-                // 地图点击事件
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
                         if (isMobile) {
@@ -245,17 +244,14 @@
                     }
                 });
 
-                // ★ 修复：为“重置视图”按钮添加点击事件
                 domResetBtn.addEventListener('click', () => {
                     if (myChart && initialOption) {
                         myChart.setOption(initialOption, true);
                     }
                 });
 
-                // 搜索框输入事件
                 domSearch.addEventListener('input', renderSidebar);
 
-                // 清空按钮点击事件
                 domClearBtn.addEventListener('click', () => {
                     if (confirm('确定要清空所有足迹吗？此操作不可恢复。')) {
                         selectedCities.clear();
@@ -264,11 +260,10 @@
                     }
                 });
 
-                // 导出图片按钮点击事件
                 domExportBtn.addEventListener('click', () => {
                     const dataUrl = myChart.getDataURL({
                         type: 'png',
-                        pixelRatio: 2, // 提高分辨率
+                        pixelRatio: 2,
                         backgroundColor: '#fff'
                     });
                     const link = document.createElement('a');
@@ -279,8 +274,7 @@
                     document.body.removeChild(link);
                 });
 
-                 // 监听窗口大小变化，重新渲染图表
-                window.addEventListener('resize', () => {
+                 window.addEventListener('resize', () => {
                     myChart.resize();
                 });
             }
