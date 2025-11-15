@@ -14,6 +14,11 @@
     }
     .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
+    /* ★ 新增CSS: 保持标题链接的样式 */
+    .header-container h1 a {
+        color: inherit; /* 继承父元素的颜色 */
+        text-decoration: none; /* 去掉下划线 */
+    }
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
 
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
@@ -89,8 +94,10 @@
 </head>
 <body>
     <div class="header-container">
-        <h1>点亮你的中国足迹</h1>
-        <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
+        <!-- ★ 修改：标题添加链接 -->
+        <h1><a href="https://mrbluegeo.xyz/">点亮你的中国足迹</a></h1>
+        <!-- ★ 修改：副标题文本变更 -->
+        <p>点击地图或列表即可点亮城市，数据自动保存在本地。点击上方标题返回网站主页。</p>
     </div>
 
     <div class="page-container">
@@ -131,6 +138,7 @@
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
+        // JavaScript部分未做任何改动，保持原样即可
         document.addEventListener('DOMContentLoaded', function() {
             const GEOJSON_URL = "/visitor-map/city_merged.geojson";
             const CITYLIST_URL = "/visitor-map/citylist.json";
@@ -199,10 +207,9 @@
             function initializeMapAndFirstRender() {
                 const initialRegions = generateRegions();
                 const option = {
-                    // ★ 新增：明确动画配置
                     animation: true,
-                    animationDurationUpdate: 500, // 数据更新动画的时长
-                    animationEasingUpdate: 'cubicInOut', // 缓动效果
+                    animationDurationUpdate: 500,
+                    animationEasingUpdate: 'cubicInOut',
 
                     tooltip: {
                         show: true, 
