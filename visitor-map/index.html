@@ -22,6 +22,25 @@
     .loading-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.9); padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); z-index: 100; pointer-events: none; }
     .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #999; z-index: 10; pointer-events: none; }
     .reset-view-btn { position: absolute; bottom: 20px; right: 20px; width: 36px; height: 36px; background: #fff; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+    /* 【新增】回到地图按钮样式 */
+    #backToMapBtn {
+        position: fixed;
+        bottom: 70px;
+        right: 20px;
+        width: 36px;
+        height: 36px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        display: none; /* 默认隐藏 */
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+        color: #333;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
     #sidebar { width: 350px; background: #fff; border-left: 1px solid #ddd; display: flex; flex-direction: column; z-index: 20; }
     #search-container { padding: 15px; border-bottom: 1px solid #eee; background: #fff; }
     .control-group { display: flex; gap: 10px; }
@@ -72,6 +91,8 @@
             <div class="loading-indicator" id="loadingTip">数据加载中...</div>
             <div id="chinaMap"></div>
             <div class="map-approval-number">GS(2024)0650</div>
+            <!-- 【新增】回到地图按钮 -->
+            <div id="backToMapBtn" title="回到地图">▲</div>
             <div class="reset-view-btn" title="重置视图">⟲</div>
         </div>
         <div id="sidebar">
@@ -105,6 +126,7 @@
             const MAP_NAME = 'my-footprint-map';
             const isMobile = window.innerWidth <= 900;
             const domMap = document.getElementById('chinaMap');
+            const domMapContainer = document.getElementById('map-container'); // 【新增】获取地图容器
             const domList = document.getElementById('listContent');
             const domSearch = document.getElementById('search');
             const domExportBtn = document.getElementById('exportImageBtn');
@@ -113,6 +135,7 @@
             const domLoading = document.getElementById('loadingTip');
             const domProvCount = document.getElementById('province-count');
             const domCityCount = document.getElementById('city-count');
+            const domBackToMapBtn = document.getElementById('backToMapBtn'); // 【新增】获取回到地图按钮
             let myChart = echarts.init(domMap);
             let provinceMap = {}, cityToProvince = {}, selectedCities = new Set(), expandedProvinces = new Set(), initialOption = {};
 
@@ -195,9 +218,9 @@
                     name: city,
                     itemStyle: {
                         areaColor: '#5cacec',
-                        // 【最终边界修正】
-                        borderColor: '#4a90e2', 
-                        borderWidth: 1
+                        // 【修改】调整边框颜色和宽度以优化视觉效果
+                        borderColor: '#2c5a89', 
+                        borderWidth: 1.5
                     }
                 }));
             }
@@ -273,6 +296,22 @@
             domSearch.addEventListener('input', () => renderSidebar());
             domResetBtn.addEventListener('click', () => { myChart.setOption({ geo: { zoom: initialOption.geo[0].zoom, center: initialOption.geo[0].center } }); });
             domClearBtn.addEventListener('click', () => { if (confirm('确定要清空所有已点亮的城市吗？')) { selectedCities.clear(); expandedProvinces.clear(); saveStorage(); updateUI(); } });
+            
+            // 【新增】回到地图按钮的事件处理
+            domBackToMapBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            window.addEventListener('scroll', () => {
+                if (isMobile) {
+                    // 当滚动距离超过地图容器高度的一半时显示按钮
+                    if (window.scrollY > domMapContainer.offsetHeight / 2) {
+                        domBackToMapBtn.style.display = 'flex';
+                    } else {
+                        domBackToMapBtn.style.display = 'none';
+                    }
+                }
+            });
+
             window.addEventListener('resize', () => myChart.resize());
             function saveStorage() { localStorage.setItem('my_footprints', JSON.stringify(Array.from(selectedCities))); }
             function loadStorage() { const saved = localStorage.getItem('my_footprints'); if (saved) { try { selectedCities = new Set(JSON.parse(saved)); } catch (e) { console.error('Storage Error', e); } } }
