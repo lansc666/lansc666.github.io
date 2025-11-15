@@ -13,8 +13,43 @@
         background-color: #f4f7f9; display: flex; flex-direction: column;
         overflow: hidden;
     }
-    .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
+    /* --- MODIFIED START --- */
+    .header-container { 
+        text-align: center; 
+        padding: 15px 20px;
+        flex-shrink: 0; 
+        background: #fff; 
+        border-bottom: 1px solid #eee; 
+    }
+    .title-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px; /* 控制图标和标题之间的距离 */
+    }
+    .home-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        color: #495057;
+        text-decoration: none;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 50%; /* 圆形按钮 */
+        transition: all 0.2s ease;
+        flex-shrink: 0; /* 防止按钮被压缩 */
+    }
+    .home-btn:hover {
+        background-color: #e9ecef;
+        transform: scale(1.05);
+    }
+    .home-btn i {
+        font-size: 18px;
+    }
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
+    /* --- MODIFIED END --- */
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
     #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
@@ -59,12 +94,37 @@
         .page-container { flex-direction: column; height: auto; overflow: visible; }
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
+        
+        /* --- MODIFIED START for Mobile --- */
+        .header-container h1 {
+            font-size: 1.5rem; /* 在移动端缩小主标题 */
+        }
+        .header-container p {
+            font-size: 0.8rem; /* 在移动端缩小副标题 */
+        }
+        .home-btn {
+            width: 34px;
+            height: 34px;
+        }
+        .home-btn i {
+            font-size: 16px;
+        }
+        .title-wrapper {
+            gap: 10px; /* 在移动端缩小图标和标题的间距 */
+        }
+        /* --- MODIFIED END for Mobile --- */
     }
 </style>
 </head>
 <body>
     <div class="header-container">
-        <h1>点亮你的中国足迹</h1>
+        <!-- Re-structured Header -->
+        <div class="title-wrapper">
+            <a href="/" class="home-btn" title="返回主页">
+                <i class="fas fa-map-marked-alt"></i>
+            </a>
+            <h1>点亮你的中国足迹</h1>
+        </div>
         <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
     </div>
     <div class="page-container">
@@ -99,6 +159,7 @@
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
+        // JavaScript 部分未做任何修改
         document.addEventListener('DOMContentLoaded', function() {
             const GEOJSON_URL = "/visitor-map/city_merged.geojson";
             const CITYLIST_URL = "/visitor-map/citylist.json";
