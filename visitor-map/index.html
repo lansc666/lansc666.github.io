@@ -91,7 +91,7 @@
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
         .mobile-only-break { display: initial; }
 		.header-container {
-			padding-bottom: 10px; /* 默认是15px，您可以将5px调整为您觉得合适的任何值 */
+			padding-bottom: 10px;
 		}
     }
 </style>
@@ -160,7 +160,7 @@
 
             let myChart = echarts.init(domMap);
             let provinceMap = {}, cityToProvince = {}, selectedCities = new Set(), expandedProvinces = new Set();
-			let initialZoom, initialCenter;
+            // ★ 修改①: 删除了不再需要的 `initialZoom`, `initialCenter` 变量
 
             if (isMobile) {
                 window.addEventListener("scroll", () => {
@@ -242,16 +242,8 @@
             }
 
             function bindEventListeners() {
-                myChart.on('finished', () => {
-                    // 这个事件会多次触发，我们用if判断，确保只在第一次时捕获
-                    if (initialZoom === undefined || initialCenter === undefined) {
-                        const currentOption = myChart.getOption();
-                        if (currentOption && currentOption.geo && currentOption.geo[0]) {
-                            initialZoom = currentOption.geo[0].zoom;
-                            initialCenter = currentOption.geo[0].center;
-                        }
-                    }
-                });
+                // ★ 修改②: 删除了 'finished' 事件监听器
+                
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
                         if (isMobile) {
@@ -262,12 +254,13 @@
                     }
                 });
 
+                // ★ 修改③: 替换为最终的、正确的重置逻辑
                 domResetBtn.addEventListener('click', () => {
-					if (myChart && initialZoom && initialCenter) {
+					if (myChart) {
 						myChart.setOption({
 							geo: {
-								zoom: initialZoom,
-								center: initialCenter
+								zoom: null,   // 设置为 null 来触发自适应重置
+								center: null  // 设置为 null 来触发自适应重置
 							}
 						});
 					}
