@@ -14,12 +14,12 @@
     }
     .header-container { text-align: center; padding: 15px 20px; flex-shrink: 0; background: #fff; border-bottom: 1px solid #eee; }
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
-    /* ★ 新增CSS: 保持标题链接的样式 */
     .header-container h1 a {
-        color: inherit; /* 继承父元素的颜色 */
-        text-decoration: none; /* 去掉下划线 */
+        color: inherit;
+        text-decoration: none;
     }
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
+    .mobile-only-break { display: none; }
 
     .page-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
     #map-container { position: relative; flex: 1; height: 100%; min-width: 0; background-color: #f4f7f9; touch-action: none; }
@@ -89,15 +89,14 @@
         .page-container { flex-direction: column; height: auto; overflow: visible; }
         #map-container { height: 50vh; flex: none; }
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
+        .mobile-only-break { display: initial; }
     }
 </style>
 </head>
 <body>
     <div class="header-container">
-        <!-- ★ 修改：标题添加链接 -->
         <h1><a href="https://mrbluegeo.xyz/">点亮你的中国足迹</a></h1>
-        <!-- ★ 修改：副标题文本变更 -->
-        <p>点击地图或列表即可点亮城市，数据自动保存在本地。点击上方标题返回网站主页。</p>
+        <p>点击地图或列表即可点亮城市，数据自动保存在本地。<br class="mobile-only-break">点击上方标题返回网站主页。</p>
     </div>
 
     <div class="page-container">
@@ -138,7 +137,6 @@
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script>
-        // JavaScript部分未做任何改动，保持原样即可
         document.addEventListener('DOMContentLoaded', function() {
             const GEOJSON_URL = "/visitor-map/city_merged.geojson";
             const CITYLIST_URL = "/visitor-map/citylist.json";
@@ -158,7 +156,7 @@
             const backToMapBtn = document.getElementById("backToMapBtn");
 
             let myChart = echarts.init(domMap);
-            let provinceMap = {}, cityToProvince = {}, selectedCities = new Set(), expandedProvinces = new Set(), initialOption = {};
+            let provinceMap = {}, cityToProvince = {}, selectedCities = new Set(), expandedProvinces = new Set();
 
             if (isMobile) {
                 window.addEventListener("scroll", () => {
@@ -237,7 +235,6 @@
                     series: []
                 };
                 myChart.setOption(option, true);
-                initialOption = myChart.getOption();
             }
 
             function bindEventListeners() {
@@ -251,9 +248,13 @@
                     }
                 });
 
+                // ★★★★★ 关键修改点 ★★★★★
                 domResetBtn.addEventListener('click', () => {
-                    if (myChart && initialOption) {
-                        myChart.setOption(initialOption, true);
+                    if (myChart) {
+                        // 使用 'restore' 动作来重置视图，这会保留数据（如颜色）
+                        myChart.dispatchAction({
+                            type: 'restore'
+                        });
                     }
                 });
 
@@ -411,4 +412,4 @@
     </script>
 	<script async src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js"></script>
 </body>
-</html>
+</html>```
