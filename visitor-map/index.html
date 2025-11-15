@@ -239,14 +239,19 @@
                     series: []
                 };
                 myChart.setOption(option, true);
-				const currentOption = myChart.getOption();
-				if (currentOption && currentOption.geo && currentOption.geo[0]) {
-					initialZoom = currentOption.geo[0].zoom;
-					initialCenter = currentOption.geo[0].center;
-				}
             }
 
             function bindEventListeners() {
+                myChart.on('finished', () => {
+                    // 这个事件会多次触发，我们用if判断，确保只在第一次时捕获
+                    if (initialZoom === undefined || initialCenter === undefined) {
+                        const currentOption = myChart.getOption();
+                        if (currentOption && currentOption.geo && currentOption.geo[0]) {
+                            initialZoom = currentOption.geo[0].zoom;
+                            initialCenter = currentOption.geo[0].center;
+                        }
+                    }
+                });
                 myChart.on('click', params => {
                     if (params.name && cityToProvince[params.name]) {
                         if (isMobile) {
