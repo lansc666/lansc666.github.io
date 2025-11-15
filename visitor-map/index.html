@@ -15,37 +15,38 @@
     }
     /* --- MODIFIED START --- */
     .header-container { 
-        position: relative; /* 1. 为绝对定位的子元素提供定位上下文 */
+        /* 不再需要 position: relative */
         text-align: center; 
-        padding: 15px 55px; /* 2. 关键！提供左右内边距，为按钮留出空间，确保标题不会重叠 */
+        padding: 15px 55px; /* 左右内边距仍然重要，用于防止标题与固定按钮重叠 */
         flex-shrink: 0; 
         background: #fff; 
         border-bottom: 1px solid #eee; 
     }
     .home-btn {
-        position: absolute;   /* 3. 使用绝对定位，脱离文档流 */
-        left: 15px;           /* 4. 精确定位到左侧 */
-        top: 50%;             /* 5. 垂直居中 */
-        transform: translateY(-50%);
+        position: fixed;   /* 1. 关键：使用 fixed 定位，相对于浏览器视口 */
+        z-index: 1000;     /* 2. 确保按钮在最上层 */
+        top: 15px;         /* 3. 距离顶部 15px */
+        left: 15px;        /* 4. 距离左侧 15px */
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 34px;
+        width: 36px;       /* 调整尺寸以获得更好看的效果 */
+        height: 36px;
         color: #343a40;
         text-decoration: none;
-        background-color: #f1f3f5;
-        border: 1px solid #e9ecef;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
         border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* 添加轻微阴影以增加立体感 */
         transition: all 0.2s ease;
     }
     .home-btn:hover {
-        background-color: #dee2e6;
+        transform: scale(1.05);
+        border-color: #ced4da;
     }
     .home-btn i {
-        font-size: 16px;
+        font-size: 17px;
     }
-    /* 标题和大段文字默认就会居中，无需额外样式 */
     .header-container h1 { margin: 0; font-size: 1.8rem; font-weight: 600; color: #2c3e50; }
     .header-container p { margin: 5px 0 0; color: #7f8c8d; font-size: 0.9rem; }
     /* --- MODIFIED END --- */
@@ -95,10 +96,16 @@
         #sidebar { width: 100%; flex: 1; border-left: none; border-top: 1px solid #ddd; }
         
         .header-container {
-            padding: 15px 50px; /* 移动端稍减内边距 */
+            padding: 15px 50px;
         }
         .home-btn {
-            left: 12px; /* 移动端更靠近边缘 */
+            top: 12px; /* 移动端微调位置 */
+            left: 12px;
+            width: 34px;
+            height: 34px;
+        }
+        .home-btn i {
+            font-size: 16px;
         }
         .header-container h1 {
             font-size: 1.5rem; 
@@ -110,10 +117,13 @@
 </style>
 </head>
 <body>
+    <!-- home-btn 现在在 body 的直接子元素中，但放在 header-container 前面在逻辑上更清晰 -->
+    <a href="/" class="home-btn" title="返回主页">
+        <i class="fas fa-home"></i>
+    </a>
+
     <div class="header-container">
-        <a href="/" class="home-btn" title="返回主页">
-            <i class="fas fa-home"></i>
-        </a>
+        <!-- HTML 结构恢复简洁 -->
         <h1>点亮你的中国足迹</h1>
         <p>点击地图区域或下方列表即可点亮城市，数据自动保存在本地。</p>
     </div>
@@ -136,7 +146,7 @@
                 <div class="stats-numbers">已点亮 <span id="province-count" class="highlight-num">0</span> 省 / <span id="city-count" class="highlight-num">0</span> 市</div>
             </div>
             <div class="sidebar-content" id="listContent"></div>
-            <div class="sidebar-footer">
+            <div class.sidebar-footer">
                 <div class="busuanzi-container">
                     <span><i class="fas fa-user"></i> <span id="busuanzi_site_uv">...</span></span>
                     <span>|</span>
@@ -331,4 +341,4 @@
     </script>
     <script src="//api.busuanzi.cc/static/3.6.9/busuanzi.min.js" defer></script>
 </body>
-</html>```
+</html>
