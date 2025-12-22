@@ -625,14 +625,24 @@
 <noscript>
   <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
 </noscript>
-<!-- Dify 云端旅行 Agent 挂载 -->
 <script>
  window.difyChatbotConfig = {
   token: 'gqxfUTmgBmoZIMiH',
   baseUrl: 'https://ai.mrbluegeo.xyz',
-  inputs: {},
-  systemVariables: {},
-  userVariables: {},
+  inputs: {
+    // You can define the inputs from the Start node here
+    // key is the variable name
+    // e.g.
+    // name: "NAME"
+  },
+  systemVariables: {
+    // user_id: 'YOU CAN DEFINE USER ID HERE',
+    // conversation_id: 'YOU CAN DEFINE CONVERSATION ID HERE, IT MUST BE A VALID UUID',
+  },
+  userVariables: {
+    // avatar_url: 'YOU CAN DEFINE USER AVATAR URL HERE',
+    // name: 'YOU CAN DEFINE USER NAME HERE',
+  },
  }
 </script>
 <script
