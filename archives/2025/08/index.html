@@ -255,24 +255,14 @@
 <noscript>
   <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
 </noscript>
+<!-- Dify 云端旅行 Agent 挂载 (美化版) -->
 <script>
  window.difyChatbotConfig = {
   token: 'gqxfUTmgBmoZIMiH',
   baseUrl: 'https://ai.mrbluegeo.xyz',
-  inputs: {
-    // You can define the inputs from the Start node here
-    // key is the variable name
-    // e.g.
-    // name: "NAME"
-  },
-  systemVariables: {
-    // user_id: 'YOU CAN DEFINE USER ID HERE',
-    // conversation_id: 'YOU CAN DEFINE CONVERSATION ID HERE, IT MUST BE A VALID UUID',
-  },
-  userVariables: {
-    // avatar_url: 'YOU CAN DEFINE USER AVATAR URL HERE',
-    // name: 'YOU CAN DEFINE USER NAME HERE',
-  },
+  inputs: {},
+  systemVariables: {},
+  userVariables: {},
  }
 </script>
 <script
@@ -280,13 +270,39 @@
  id="gqxfUTmgBmoZIMiH"
  defer>
 </script>
+
 <style>
+  /* 1. 悬浮按钮美化 */
   #dify-chatbot-bubble-button {
-    background-color: #1C64F2 !important;
+    background-color: #1C64F2 !important; /* 主题色，可改为你的博客主色 */
+    position: fixed !important;           /* 核心：强制固定定位 */
+    bottom: 20px !important;              /* 距离底部距离 */
+    right: 20px !important;               /* 距离右侧距离 */
+    width: 55px !important;               /* 按钮宽度 */
+    height: 55px !important;              /* 按钮高度 */
+    border-radius: 50% !important;        /* 完美的圆形 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important; /* 立体阴影 */
+    z-index: 9999 !important;             /* 保证在最顶层，不被图片遮挡 */
+    transition: transform 0.3s ease !important; /* 动画过渡 */
   }
+
+  /* 鼠标悬停时的动效 */
+  #dify-chatbot-bubble-button:hover {
+    transform: scale(1.1) !important;     /* 鼠标放上去稍微变大 */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+  }
+
+  /* 2. 聊天窗口美化 */
   #dify-chatbot-bubble-window {
-    width: 24rem !important;
-    height: 40rem !important;
+    position: fixed !important;           /* 核心：窗口也强制固定 */
+    bottom: 90px !important;              /* 在按钮上方弹出 */
+    right: 20px !important;
+    width: 380px !important;              /* 稍微加宽一点，视野更好 */
+    height: 600px !important;             /* 加高一点 */
+    max-height: 80vh !important;          /* 防止在小屏幕上溢出 */
+    border-radius: 12px !important;       /* 窗口圆角 */
+    box-shadow: 0 5px 40px rgba(0,0,0,0.16) !important; /* 窗口的大阴影 */
+    z-index: 9999 !important;
   }
 </style>
 </body>
