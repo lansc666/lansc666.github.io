@@ -1,473 +1,465 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>MrBlue的旅行足迹地图</title>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MrBlue的旅行足迹地图</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
 <style>
-	/* --- 基础样式 --- */
-	body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-x: hidden; }
-	.header-container { text-align: center; padding: 0 20px; margin-bottom: 25px; margin-top: 20px; }
-	.header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
-	.header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
-	.page-container { display: flex; width: 90%; max-width: 1400px; height: 80vh; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
-	#map-container { position: relative; flex: 3; height: 100%; min-width: 0; touch-action: none; }
-	#chinaMap { width: 100%; height: 100%; }
-	.loading-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.8); color: #888; font-size: 16px; z-index: 10; transition: opacity 0.3s; }
-	.map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #333; opacity: 0.5; z-index: 10; pointer-events: none; }
-	.reset-view-btn { position: absolute; bottom: 10px; right: 10px; width: 32px; height: 32px; background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; transition: background-color 0.2s, transform 0.2s; }
-	.reset-view-btn:hover { background-color: #fff; transform: rotate(90deg); }
-	#sidebar { flex: 1; min-width: 300px; display: flex; flex-direction: column; border-left: 1px solid #e0e0e0; background-color: #fafcfe; }
-	
-	/* --- 新增：地图切换按钮样式 --- */
-	.map-switch-container { display: flex; gap: 10px; padding-bottom: 15px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 5px; }
-	.map-switch-btn { flex: 1; padding: 8px 0; font-size: 14px; border-radius: 6px; cursor: pointer; border: 1px solid #ccc; background-color: #fff; color: #555; transition: all 0.2s; font-weight: 500; }
-	.map-switch-btn:hover { background-color: #f0f8ff; border-color: #5cacec; }
-	.map-switch-btn.active { background-color: #5cacec; border-color: #5cacec; color: #fff; box-shadow: 0 2px 6px rgba(92,172,236,0.3); }
-
-	#search-container { padding: 20px 25px; border-bottom: 1px solid #e0e0e0; display: flex; flex-direction: column; gap: 10px; }
-	.filter-controls { display: flex; gap: 10px; }
-	#search { flex-grow: 1; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
-	#search:focus { border-color: #5cacec; box-shadow: 0 0 0 3px rgba(92, 172, 236, 0.2); outline: none; }
-	#year-filter { padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; background-color: #fff; cursor: pointer; }
-	#expandCollapseBtn { width: 100%; padding: 10px 12px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; box-sizing: border-box; }
-	#expandCollapseBtn:hover { background-color: #e0e0e0; border-color: #aaa; }
-	.sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
-	.province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-	.province:first-child { margin-top: 0; }
-	.province-toggle-arrow { display: inline-block; margin-right: 8px; transition: transform 0.2s; font-size: 0.9em; color: #888; }
-	.province.expanded .province-toggle-arrow { transform: rotate(90deg); }
-	.city-list { margin-left: 10px; display: none; }
-	.province.expanded + .city-list { display: block; }
-	.city { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; border: 1px solid #ddd; background-color: #fff; }
-	.city:hover { background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec; }
-	.city .city-name { font-weight: 500; color: #333; }
-	.city .travel-time { font-size: 12px; color: #777; margin-top: 4px; }
-	.sidebar-footer { padding: 20px 25px; border-top: 1px solid #e0e0e0; margin-top: auto; text-align: center; background-color: #fafcfe; }
-	.sidebar-footer p { margin: 8px 0; font-size: 13px; color: #999; }
-	.busuanzi-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; font-size: 13px; color: #999; }
-	.busuanzi-item { display: flex; align-items: center; gap: 5px; }
-	.busuanzi-item .fas { color: #999; }
-	#stats-counter { font-weight: 500; color: #555; margin: 12px 0 !important; font-size: 14px !important; }
-	.tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
-	.tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; cursor: zoom-in; }
-	.tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
-	.tooltip-card .time { font-size: 13px; color: #666; margin-bottom: 8px; }
-	.tooltip-card .desc { font-size: 14px; font-style: italic; color: #555; margin-bottom: 4px; }
-	.back-to-top { position: fixed; bottom: 30px; right: 30px; width: 40px; height: 40px; background-color: rgba(0, 0, 0, 0.5); color: white; text-align: center; line-height: 40px; border-radius: 50%; text-decoration: none; font-size: 24px; display: none; z-index: 100; transition: opacity 0.3s; }
-	
-	/* --- 【最终优化】移动端专属悬浮面板样式 --- */
-	#mobile-tooltip-panel {
-		position: fixed;
-		bottom: 0; left: 0; right: 0;
-		background: #fff;
-		z-index: 1000;
-		box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
-		border-radius: 16px 16px 0 0;
-		padding: 20px;
-		transform: translateY(110%);
-		transition: transform 0.3s ease-out;
-		max-height: 85vh;
-		display: none;
-		box-sizing: border-box;
-		display: flex;
-		flex-direction: column;
-	}
-	#mobile-tooltip-panel.active { transform: translateY(0); }
-	
-	.panel-header {
-		position: relative;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		margin-bottom: 8px;
-	}
-	.panel-header .city { font-size: 20px; font-weight: bold; margin: 0; }
-	#mobile-tooltip-close { position: absolute; top: 50%; right: 0; transform: translateY(-50%); font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; padding: 5px; }
-	
-	.panel-body { overflow-y: auto; text-align: center; }
-	.panel-body .time { font-size: 14px; color: #666; margin-bottom: 8px; }
-	.panel-body .desc { font-size: 15px; font-style: italic; margin-bottom: 10px; }
-	
-	.panel-image-container { width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; max-height: 45vh; overflow-y: auto; border-radius: 8px; margin-top: 10px; background-color: #f0f0f0; -webkit-overflow-scrolling: touch; }
-	.panel-image-container img { width: 100%; height: auto; display: block; cursor: zoom-in; }
-	
-	/* --- 响应式布局 --- */
-	@media (max-width: 900px) {
-		html, body { height: auto; justify-content: flex-start; }
-		.header-container h1 { font-size: 1.8rem; }
-		body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
-		body #map-container { height: 50vh; flex: none; }
-		body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
-		body .sidebar-content { overflow-y: visible; }
-		.back-to-top { bottom: 20px; right: 20px; }
-		.reset-view-btn { width: 28px; height: 28px; font-size: 18px; }
-		#mobile-tooltip-panel { display: flex; }
-	}
+    body, html { margin: 0; padding: 0; height: 100vh; width: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-x: hidden; }
+    .header-container { text-align: center; padding: 0 20px; margin-bottom: 25px; margin-top: 20px; }
+    .header-container h1 { margin: 0; font-size: 2.2rem; font-weight: 600; color: #2c3e50; }
+    .header-container p { margin: 8px 0 0; color: #7f8c8d; font-size: 1rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+    .page-container { display: flex; width: 90%; max-width: 1400px; height: 80vh; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
+    #map-container { position: relative; flex: 3; height: 100%; min-width: 0; touch-action: none; }
+    #chinaMap { width: 100%; height: 100%; }
+    .loading-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.8); color: #888; font-size: 16px; z-index: 10; transition: opacity 0.3s; }
+    .map-approval-number { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #333; opacity: 0.5; z-index: 10; pointer-events: none; }
+    .reset-view-btn { position: absolute; bottom: 10px; right: 10px; width: 32px; height: 32px; background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; transition: background-color 0.2s, transform 0.2s; }
+    .reset-view-btn:hover { background-color: #fff; transform: rotate(90deg); }
+    #sidebar { flex: 1; min-width: 300px; display: flex; flex-direction: column; border-left: 1px solid #e0e0e0; background-color: #fafcfe; }
+    .map-switch-container { display: flex; gap: 10px; padding-bottom: 15px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 5px; }
+    .map-switch-btn { flex: 1; padding: 8px 0; font-size: 14px; border-radius: 6px; cursor: pointer; border: 1px solid #ccc; background-color: #fff; color: #555; transition: all 0.2s; font-weight: 500; }
+    .map-switch-btn:hover { background-color: #f0f8ff; border-color: #5cacec; }
+    .map-switch-btn.active { background-color: #5cacec; border-color: #5cacec; color: #fff; box-shadow: 0 2px 6px rgba(92,172,236,0.3); }
+    #search-container { padding: 20px 25px; border-bottom: 1px solid #e0e0e0; display: flex; flex-direction: column; gap: 10px; }
+    .filter-controls { display: flex; gap: 10px; }
+    #search { flex-grow: 1; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
+    #search:focus { border-color: #5cacec; box-shadow: 0 0 0 3px rgba(92, 172, 236, 0.2); outline: none; }
+    #year-filter { padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; background-color: #fff; cursor: pointer; }
+    #expandCollapseBtn { width: 100%; padding: 10px 12px; font-size: 14px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; box-sizing: border-box; }
+    #expandCollapseBtn:hover { background-color: #e0e0e0; border-color: #aaa; }
+    .sidebar-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
+    .province { font-weight: bold; font-size: 18px; color: #333; cursor: pointer; margin-top: 20px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+    .province:first-child { margin-top: 0; }
+    .province-toggle-arrow { display: inline-block; margin-right: 8px; transition: transform 0.2s; font-size: 0.9em; color: #888; }
+    .province.expanded .province-toggle-arrow { transform: rotate(90deg); }
+    .city-list { margin-left: 10px; display: none; }
+    .province.expanded + .city-list { display: block; }
+    .city { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; border: 1px solid #ddd; background-color: #fff; }
+    .city:hover { background-color: #eaf6ff; transform: scale(1.03); border-color: #5cacec; }
+    .city .city-name { font-weight: 500; color: #333; }
+    .city .travel-time { font-size: 12px; color: #777; margin-top: 4px; }
+    .sidebar-footer { padding: 20px 25px; border-top: 1px solid #e0e0e0; margin-top: auto; text-align: center; background-color: #fafcfe; }
+    .sidebar-footer p { margin: 8px 0; font-size: 13px; color: #999; }
+    .busuanzi-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; font-size: 13px; color: #999; }
+    .busuanzi-item { display: flex; align-items: center; gap: 5px; }
+    .busuanzi-item .fas { color: #999; }
+    #stats-counter { font-weight: 500; color: #555; margin: 12px 0 !important; font-size: 14px !important; }
+    .tooltip-card { padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); background: #fff; width: 220px; border: 1px solid #ccc; text-align: center; }
+    .tooltip-card img { width: 100%; height: auto; border-radius: 4px; margin-top: 8px; background-color: #eee; cursor: zoom-in; }
+    .tooltip-card .city { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
+    .tooltip-card .time { font-size: 13px; color: #666; margin-bottom: 8px; }
+    .tooltip-card .desc { font-size: 14px; font-style: italic; color: #555; margin-bottom: 4px; }
+    .back-to-top { position: fixed; bottom: 30px; right: 30px; width: 40px; height: 40px; background-color: rgba(0, 0, 0, 0.5); color: white; text-align: center; line-height: 40px; border-radius: 50%; text-decoration: none; font-size: 24px; display: none; z-index: 100; transition: opacity 0.3s; }
+    #mobile-tooltip-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.15); border-radius: 16px 16px 0 0; padding: 20px; transform: translateY(110%); transition: transform 0.3s ease-out; max-height: 85vh; display: none; box-sizing: border-box; flex-direction: column; }
+    #mobile-tooltip-panel.active { transform: translateY(0); }
+    .panel-header { position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; }
+    .panel-header .city { font-size: 20px; font-weight: bold; margin: 0; }
+    #mobile-tooltip-close { position: absolute; top: 50%; right: 0; transform: translateY(-50%); font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; padding: 5px; }
+    .panel-body { overflow-y: auto; text-align: center; }
+    .panel-body .time { font-size: 14px; color: #666; margin-bottom: 8px; }
+    .panel-body .desc { font-size: 15px; font-style: italic; margin-bottom: 10px; }
+    .panel-image-container { width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; max-height: 45vh; overflow-y: auto; border-radius: 8px; margin-top: 10px; background-color: #f0f0f0; -webkit-overflow-scrolling: touch; }
+    .panel-image-container img { width: 100%; height: auto; display: block; cursor: zoom-in; }
+    @media (max-width: 900px) {
+        html, body { height: auto; justify-content: flex-start; }
+        .header-container h1 { font-size: 1.8rem; }
+        body .page-container { flex-direction: column; width: 100%; height: auto; max-width: 100%; border-radius: 0; box-shadow: none; }
+        body #map-container { height: 50vh; flex: none; }
+        body #sidebar { min-width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
+        body .sidebar-content { overflow-y: visible; }
+        .back-to-top { bottom: 20px; right: 20px; }
+        .reset-view-btn { width: 28px; height: 28px; font-size: 18px; }
+        #mobile-tooltip-panel { display: flex; }
+    }
 </style>
 </head>
 <body>
-	<div class="header-container">
-		<a href="https://mrbluegeo.xyz" style="text-decoration: none; color: inherit;">
-			<h1>MrBlue的旅行足迹地图</h1>
-		</a>	
-		<p>点击边栏或地图上的高亮区域查看“一城一图”，支持交互式缩放和城市搜索。<br>统计范围：2022年9月-2026年2月。</p>
-	</div>
-	<div class="page-container">
-		<div id="map-container">
-			<div class="loading-indicator">地图加载中，请耐心等待……</div>
-			<div id="chinaMap"></div>
-			<div class="map-approval-number">GS(2024)0650</div>
-			<span class="reset-view-btn" title="重置视图">⟲</span>
-		</div>
-		<div id="sidebar">
-			<div id="search-container">
-				<!-- 新增地图切换控制区 -->
-				<div class="map-switch-container">
-					<button id="btn-china" class="map-switch-btn active">中国足迹</button>
-					<button id="btn-world" class="map-switch-btn">世界足迹</button>
-				</div>
-				<div class="filter-controls">
-					<input type="text" id="search" placeholder="搜索城市/国家...">
-					<select id="year-filter"></select>
-				</div>
-				<button id="expandCollapseBtn">展开全部</button>
-			</div>
-			<div class="sidebar-content">
-				<div id="cityListContainer"></div>
-			</div>
-			<div class="sidebar-footer">
-				<div class="busuanzi-container">
-					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_site_uv">加载中...</span></div>
-					<div class="busuanzi-item">|</div>
-					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_site_pv">加载中...</span></div>
-				</div>
-				<p id="stats-counter">统计中...</p>
-				<p>照片均为本人拍摄，版权所有©</p>
-				<p id="last-updated">最后更新于: 2026年2月20日</p>
-				<p><a href="https://mrbluegeo.xyz">返回网站主页</a></p>
-			</div>
-		</div>
-	</div>
-	<a href="#" class="back-to-top" title="回到顶部">↑</a>
-	<div id="mobile-tooltip-panel">
-		<div class="panel-header">
-			<h3 class="city" id="mobile-tooltip-city"></h3>
-			<button id="mobile-tooltip-close">×</button>
-		</div>
-		<div class="panel-body" id="mobile-tooltip-body"></div>
-	</div>
+    <div class="header-container">
+        <a href="https://mrbluegeo.xyz" style="text-decoration: none; color: inherit;">
+            <h1>MrBlue的旅行足迹地图</h1>
+        </a>	
+        <p>点击边栏或地图上的高亮区域查看“一城一图”，支持交互式缩放和城市搜索。<br>统计范围：2022年9月-2026年2月。</p>
+    </div>
+    <div class="page-container">
+        <div id="map-container">
+            <div class="loading-indicator">地图加载中，请耐心等待……</div>
+            <div id="chinaMap"></div>
+            <div class="map-approval-number">GS(2024)0650</div>
+            <span class="reset-view-btn" title="重置视图">⟲</span>
+        </div>
+        <div id="sidebar">
+            <div id="search-container">
+                <div class="map-switch-container">
+                    <button id="btn-china" class="map-switch-btn active">中国足迹</button>
+                    <button id="btn-world" class="map-switch-btn">世界足迹</button>
+                </div>
+                <div class="filter-controls">
+                    <input type="text" id="search" placeholder="搜索城市/国家...">
+                    <select id="year-filter"></select>
+                </div>
+                <button id="expandCollapseBtn">展开全部</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="cityListContainer"></div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="busuanzi-container">
+                    <div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_site_uv">加载中...</span></div>
+                    <div class="busuanzi-item">|</div>
+                    <div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_site_pv">加载中...</span></div>
+                </div>
+                <p id="stats-counter">统计中...</p>
+                <p>照片均为本人拍摄，版权所有©</p>
+                <p id="last-updated">最后更新于: 2026年2月20日</p>
+                <p><a href="https://mrbluegeo.xyz">返回网站主页</a></p>
+            </div>
+        </div>
+    </div>
+    <a href="#" class="back-to-top" title="回到顶部">↑</a>
+    <div id="mobile-tooltip-panel">
+        <div class="panel-header">
+            <h3 class="city" id="mobile-tooltip-city"></h3>
+            <button id="mobile-tooltip-close">×</button>
+        </div>
+        <div class="panel-body" id="mobile-tooltip-body"></div>
+    </div>
 
-	<script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
-	<script>
-		document.addEventListener('DOMContentLoaded', function() {
-			// 文件路径配置
-			const chinaGeoJsonPath = "/travel-map/city_merged.geojson";
-			const worldGeoJsonPath = "/travel-map/world.geojson";
-			const travelDataChinaPath = "/travel-map/traveldata_china.json";
-			const travelDataWorldPath = "/travel-map/traveldata_world.json";
-			
-			const myChart = echarts.init(document.getElementById('chinaMap'));
-			const cityListContainer = document.getElementById('cityListContainer');
-			const searchInput = document.getElementById('search');
-			const yearFilter = document.getElementById('year-filter');
-			const statsCounter = document.getElementById('stats-counter');
-			const loadingIndicator = document.querySelector('.loading-indicator');
-			const resetViewBtn = document.querySelector('.reset-view-btn');
-			const backToTopBtn = document.querySelector('.back-to-top');
-			const expandCollapseBtn = document.getElementById('expandCollapseBtn');
-			
-			const btnChina = document.getElementById('btn-china');
-			const btnWorld = document.getElementById('btn-world');
-			
-			const isMobile = window.matchMedia("(max-width: 900px)").matches;
-			const mobileTooltipPanel = document.getElementById('mobile-tooltip-panel');
-			const mobileTooltipCity = document.getElementById('mobile-tooltip-city');
-			const mobileTooltipBody = document.getElementById('mobile-tooltip-body');
-			const mobileTooltipCloseBtn = document.getElementById('mobile-tooltip-close');
-			let imageViewer = null;
+    <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chinaGeoJsonPath = "/travel-map/city_merged.geojson";
+            const worldGeoJsonPath = "/travel-map/world.geojson";
+            const travelDataChinaPath = "/travel-map/traveldata_china.json";
+            const travelDataWorldPath = "/travel-map/traveldata_world.json";
+            
+            const myChart = echarts.init(document.getElementById('chinaMap'));
+            const cityListContainer = document.getElementById('cityListContainer');
+            const searchInput = document.getElementById('search');
+            const yearFilter = document.getElementById('year-filter');
+            const statsCounter = document.getElementById('stats-counter');
+            const loadingIndicator = document.querySelector('.loading-indicator');
+            const resetViewBtn = document.querySelector('.reset-view-btn');
+            const backToTopBtn = document.querySelector('.back-to-top');
+            const expandCollapseBtn = document.getElementById('expandCollapseBtn');
+            
+            const btnChina = document.getElementById('btn-china');
+            const btnWorld = document.getElementById('btn-world');
+            
+            const isMobile = window.matchMedia("(max-width: 900px)").matches;
+            const mobileTooltipPanel = document.getElementById('mobile-tooltip-panel');
+            const mobileTooltipCity = document.getElementById('mobile-tooltip-city');
+            const mobileTooltipBody = document.getElementById('mobile-tooltip-body');
+            const mobileTooltipCloseBtn = document.getElementById('mobile-tooltip-close');
+            let imageViewer = null;
 
-			let isAllExpanded = false;
-			
-			// 全局状态管理
-			let currentScope = 'china'; // 当前视图：'china' 或 'world'
-			let mapData = {
-				china: [],
-				world:[]
-			};
-			let mapInitialView = {
-				china: { zoom: 1.15, center: null },
-				world: { zoom: 1.15, center: null }
-			};
+            let isAllExpanded = false;
+            let currentScope = 'china';
+            let mapData = { china: [], world: [] };
+            let mapInitialView = { china: { zoom: 1.15, center: null }, world: { zoom: 1.15, center: null } };
 
-			window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
-			backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+            window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
+            backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-			// 并发加载4个文件
-			Promise.all()
-			.then(() => {
-				loadingIndicator.style.display = 'none';
-				
-				// 注册两张地图
-				echarts.registerMap('china-map', chinaGeoJson);
-				echarts.registerMap('world-map', worldGeoJson);
-				
-				// 保存数据
-				mapData.china = travelDataChina;
-				mapData.world = travelDataWorld;
+            let p1 = fetch(chinaGeoJsonPath).then(res => res.json());
+            let p2 = fetch(worldGeoJsonPath).then(res => res.json());
+            let p3 = fetch(travelDataChinaPath).then(res => res.json());
+            let p4 = fetch(travelDataWorldPath).then(res => res.json());
 
-				const baseOption = {
-					tooltip: {
-						show: !isMobile,
-						trigger: 'item',
-						confine: true,
-						enterable: true,
-						hideDelay: 200,
-						formatter: function(params) {
-							if (params.data && params.data.value === 1) {
-								const info = mapData.find(d => d.name === params.name);
-								if (info) {
-									const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
-									const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy">` : '';
-									return `<div class="tooltip-card">
-												<div class="city">${info.name}</div>
-												<div class="time">首次访问：${info.time}</div>
-												${descriptionHtml}
-												<div class="image-container">${imageHtml}</div>
-											</div>`;
-								}
-							}
-							return params.name;
-						}
-					},
-					visualMap: {
-						type: 'piecewise',
-						show: false,
-						pieces:,
-					},
-					series:
-					}]
-				};
-				myChart.setOption(baseOption);
+            Promise.all([p1, p2, p3, p4])
+            .then(function(results) {
+                let chinaGeoJson = results[0];
+                let worldGeoJson = results[1];
+                let travelDataChina = results[2];
+                let travelDataWorld = results[3];
 
-				if (!isMobile) {
-					myChart.on('showtip', function() {
-						setTimeout(() => {
-							const container = document.querySelector('.tooltip-card .image-container');
-							if (container && container.querySelector('img')) {
-							   if (imageViewer) imageViewer.destroy();
-							   imageViewer = new Viewer(container);
-							}
-						}, 100);
-					});
-				}
-				
-				myChart.on('click', function (params) {
-					if (params && params.name) {
-						if (isMobile) {
-							myChart.dispatchAction({ type: 'hideTip' });
-							showMobilePanel(params.name);
-						}
-					} else {
-						if (isMobile) {
-							mobileTooltipPanel.classList.remove('active');
-						}
-						myChart.dispatchAction({ type: 'hideTip' });
-					}
-				});					
+                loadingIndicator.style.display = 'none';
 
-				mobileTooltipCloseBtn.addEventListener('click', () => {
-					mobileTooltipPanel.classList.remove('active');
-				});
-				
-				function showMobilePanel(cityName) {
-					const info = mapData.find(d => d.name === cityName);
-					if (info) {
-						mobileTooltipCity.textContent = info.name;
-						const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
-						const imageHtml = info.image && info.image !== "N/A" ? `<div class="panel-image-container"><img src="${info.image}" alt="${info.name}"></div>` : '';
-						mobileTooltipBody.innerHTML = `
-							<div class="time">首次访问：${info.time}</div>
-							${descriptionHtml}
-							${imageHtml}
-						`;
-						mobileTooltipPanel.classList.add('active');
-						if (imageHtml) {
-							if (imageViewer) imageViewer.destroy();
-							imageViewer = new Viewer(mobileTooltipBody.querySelector('.panel-image-container img'));
-						}
-					}
-				}					
-				
-				// 更新年份下拉菜单
-				function updateYearFilter(data) {
-					let sortedYears = Array.from(new Set(data.map(d => d.time.substring(0, 4)))).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
-					let optionsHtml = '<option value="all">全部年份</option>';
-					sortedYears.forEach(year => {
-						optionsHtml += `<option value="${year}">${year}年</option>`;
-						if (year === '2022' && new Set(data.map(d => d.time)).has("常住")) {
-							optionsHtml += '<option value="常住">常住</option>';
-						}
-					});
-					yearFilter.innerHTML = optionsHtml;
-				}
+                echarts.registerMap('china-map', chinaGeoJson);
+                echarts.registerMap('world-map', worldGeoJson);
 
-				// 更新统计文案
-				function updateStatsText(data) {
-					const count = data.length;
-					const groupCount = new Set(data.map(d => d.province)).size;
-					const label1 = currentScope === 'china' ? '省份' : '国家/地区';
-					const label2 = currentScope === 'china' ? '城市' : '城市/地点';
-					statsCounter.textContent = `已走过 ${groupCount} 个${label1} / ${count} 个${label2}`;
-				}
+                mapData.china = travelDataChina;
+                mapData.world = travelDataWorld;
 
-				// 视图重置逻辑
-				resetViewBtn.addEventListener('click', () => {
-					myChart.setOption({
-						series:.zoom,
-							center: mapInitialView.center
-						}]
-					});
-				});
+                const baseOption = {
+                    tooltip: {
+                        show: !isMobile,
+                        trigger: 'item',
+                        confine: true,
+                        enterable: true,
+                        hideDelay: 200,
+                        formatter: function(params) {
+                            if (params.data && params.data.value === 1) {
+                                let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+                                const info = currentData.find(d => d.name === params.name);
+                                if (info) {
+                                    const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
+                                    const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy">` : '';
+                                    return `<div class="tooltip-card">
+                                                <div class="city">${info.name}</div>
+                                                <div class="time">首次访问：${info.time}</div>
+                                                ${descriptionHtml}
+                                                <div class="image-container">${imageHtml}</div>
+                                            </div>`;
+                                }
+                            }
+                            return params.name;
+                        }
+                    },
+                    visualMap: {
+                        type: 'piecewise',
+                        show: false,
+                        pieces: [{ value: 1, color: '#5cacec' }]
+                    },
+                    series: [{
+                        type: 'map',
+                        map: 'china-map',
+                        roam: true,
+                        zoom: 1.15,
+                        selectedMode: false,
+                        itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+                        emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
+                        data: mapData.china.map(d => ({ name: d.name, value: 1 }))
+                    }]
+                };
+                
+                myChart.setOption(baseOption);
 
-				// 核心筛选与渲染函数
-				function updateAndRender() {
-					const selectedYear = yearFilter.value;
-					const keyword = searchInput.value.trim().toLowerCase();
-					let filteredData = mapData;
-					
-					if (selectedYear !== 'all') {
-						if (selectedYear === '常住') {
-							filteredData = filteredData.filter(d => d.time === '常住');
-						} else {
-							filteredData = filteredData.filter(d => d.time.startsWith(selectedYear));
-						}
-					}
-					
-					const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
-					
-					myChart.setOption({ series: });
-					renderList(listData);
-				}
+                if (!isMobile) {
+                    myChart.on('showtip', function() {
+                        setTimeout(() => {
+                            const container = document.querySelector('.tooltip-card .image-container');
+                            if (container && container.querySelector('img')) {
+                               if (imageViewer) imageViewer.destroy();
+                               imageViewer = new Viewer(container);
+                            }
+                        }, 100);
+                    });
+                }
+                
+                myChart.on('click', function (params) {
+                    if (params && params.name) {
+                        if (isMobile) {
+                            myChart.dispatchAction({ type: 'hideTip' });
+                            showMobilePanel(params.name);
+                        }
+                    } else {
+                        if (isMobile) {
+                            mobileTooltipPanel.classList.remove('active');
+                        }
+                        myChart.dispatchAction({ type: 'hideTip' });
+                    }
+                });                 
 
-				// 渲染右侧列表
-				function renderList(dataToRender) {
-					cityListContainer.innerHTML = '';
-					isAllExpanded = false;
-					expandCollapseBtn.textContent = '展开全部';
-					
-					const groupedByProvince = dataToRender.reduce((acc, city) => {
-						(acc = acc ||[]).push(city);
-						return acc;
-					}, {});
-					
-					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => groupedByProvince.length - groupedByProvince.length);
-					
-					sortedProvinces.forEach(province => {
-						const cities = groupedByProvince;
-						const provinceDiv = document.createElement('div');
-						provinceDiv.className = 'province';
-						provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
-						
-						const citySubListDiv = document.createElement('div');
-						citySubListDiv.className = 'city-list';
-						
-						provinceDiv.addEventListener('click', () => {
-							provinceDiv.classList.toggle('expanded');
-							citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
-							myChart.dispatchAction({ type: 'downplay' });
-							myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: cities.map(c => c.name) });
-						});
-						
-						cities.forEach(city => {
-							const cityDiv = document.createElement('div');
-							cityDiv.className = 'city';
-							cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
-							
-							cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
-							cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
-							cityDiv.addEventListener('click', (e) => {
-								e.stopPropagation();
-								myChart.dispatchAction({ type: 'highlight', name: city.name });
-								if (isMobile) {
-									showMobilePanel(city.name);
-								} else {
-									myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
-								}
-							});
-							citySubListDiv.appendChild(cityDiv);
-						});
-						cityListContainer.appendChild(provinceDiv);
-						cityListContainer.appendChild(citySubListDiv);
-					});
-					
-					if (cityListContainer.children.length === 0) {
-						cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关记录</div>';
-					}
-				}
+                mobileTooltipCloseBtn.addEventListener('click', () => {
+                    mobileTooltipPanel.classList.remove('active');
+                });
+                
+                function showMobilePanel(cityName) {
+                    let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+                    const info = currentData.find(d => d.name === cityName);
+                    if (info) {
+                        mobileTooltipCity.textContent = info.name;
+                        const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
+                        const imageHtml = info.image && info.image !== "N/A" ? `<div class="panel-image-container"><img src="${info.image}" alt="${info.name}"></div>` : '';
+                        mobileTooltipBody.innerHTML = `
+                            <div class="time">首次访问：${info.time}</div>
+                            ${descriptionHtml}
+                            ${imageHtml}
+                        `;
+                        mobileTooltipPanel.classList.add('active');
+                        if (imageHtml) {
+                            if (imageViewer) imageViewer.destroy();
+                            imageViewer = new Viewer(mobileTooltipBody.querySelector('.panel-image-container img'));
+                        }
+                    }
+                }                   
+                
+                function updateYearFilter(data) {
+                    let sortedYears = Array.from(new Set(data.map(d => d.time.substring(0, 4)))).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
+                    let optionsHtml = '<option value="all">全部年份</option>';
+                    sortedYears.forEach(year => {
+                        optionsHtml += `<option value="${year}">${year}年</option>`;
+                        if (year === '2022' && new Set(data.map(d => d.time)).has("常住")) {
+                            optionsHtml += '<option value="常住">常住</option>';
+                        }
+                    });
+                    yearFilter.innerHTML = optionsHtml;
+                }
 
-				// 切换地图范围逻辑
-				function switchScope(newScope) {
-					if (currentScope === newScope) return;
-					currentScope = newScope;
-					
-					// 切换按钮样式
-					btnChina.classList.toggle('active', currentScope === 'china');
-					btnWorld.classList.toggle('active', currentScope === 'world');
-					
-					// 清空搜索状态
-					searchInput.value = '';
-					
-					// 更新对应的年份和统计
-					updateYearFilter(mapData);
-					updateStatsText(mapData);
-					
-					// 切换ECharts底图
-					myChart.setOption({
-						series:.zoom,
-							center: mapInitialView.center
-						}]
-					}, { replaceMerge: });
-					
-					updateAndRender();
-				}
+                function updateStatsText(data) {
+                    const count = data.length;
+                    const groupCount = new Set(data.map(d => d.province)).size;
+                    const label1 = currentScope === 'china' ? '省份' : '国家/地区';
+                    const label2 = currentScope === 'china' ? '城市' : '地点';
+                    statsCounter.textContent = `已走过 ${groupCount} 个${label1} / ${count} 个${label2}`;
+                }
 
-				btnChina.addEventListener('click', () => switchScope('china'));
-				btnWorld.addEventListener('click', () => switchScope('world'));
+                resetViewBtn.addEventListener('click', () => {
+                    let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
+                    let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
+                    myChart.setOption({
+                        series: [{
+                            zoom: targetZoom,
+                            center: targetCenter
+                        }]
+                    });
+                });
 
-				expandCollapseBtn.addEventListener('click', () => {
-					isAllExpanded = !isAllExpanded;
-					expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
-					document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
-					document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
-				});
-				
-				yearFilter.addEventListener('change', updateAndRender);
-				searchInput.addEventListener('input', updateAndRender);
-				
-				// 初始调用
-				updateYearFilter(mapData.china);
-				updateStatsText(mapData.china);
-				updateAndRender();
+                function updateAndRender() {
+                    const selectedYear = yearFilter.value;
+                    const keyword = searchInput.value.trim().toLowerCase();
+                    let filteredData = currentScope === 'china' ? mapData.china : mapData.world;
+                    
+                    if (selectedYear !== 'all') {
+                        if (selectedYear === '常住') {
+                            filteredData = filteredData.filter(d => d.time === '常住');
+                        } else {
+                            filteredData = filteredData.filter(d => d.time.startsWith(selectedYear));
+                        }
+                    }
+                    
+                    const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
+                    
+                    const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
+                    let currentSeriesData = listData.map(d => ({ name: d.name, value: 1 }));
+                    
+                    myChart.setOption({ 
+                        series: [{
+                            map: targetMap,
+                            data: currentSeriesData
+                        }]
+                    });
+                    
+                    renderList(listData);
+                }
 
-				// 抓取初始缩放状态（可选补偿）
-				const initialOption = myChart.getOption();
-				if (initialOption && initialOption.series) {
-					mapInitialView.china.zoom = initialOption.series.zoom || 1.15;
-				}
-			})
-			.catch(error => {
-				loadingIndicator.style.display = 'none';
-				document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查各JSON文件路径或网络连接。";
-				console.error("加载地图或旅行数据失败:", error);
-			});
-			window.addEventListener('resize', () => myChart.resize());
-		});
-	</script>
-	
-	<script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
+                function renderList(dataToRender) {
+                    cityListContainer.innerHTML = '';
+                    isAllExpanded = false;
+                    expandCollapseBtn.textContent = '展开全部';
+                    
+                    const groupedByProvince = dataToRender.reduce((acc, city) => {
+                        let prov = city.province || '未知';
+                        if (!acc[prov]) {
+                            acc[prov] = [];
+                        }
+                        acc[prov].push(city);
+                        return acc;
+                    }, {});
+                    
+                    const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
+                        return groupedByProvince[b].length - groupedByProvince[a].length;
+                    });
+                    
+                    sortedProvinces.forEach(province => {
+                        const cities = groupedByProvince[province];
+                        const provinceDiv = document.createElement('div');
+                        provinceDiv.className = 'province';
+                        provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
+                        
+                        const citySubListDiv = document.createElement('div');
+                        citySubListDiv.className = 'city-list';
+                        
+                        provinceDiv.addEventListener('click', () => {
+                            provinceDiv.classList.toggle('expanded');
+                            citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
+                            myChart.dispatchAction({ type: 'downplay' });
+                            
+                            let namesToHighlight = cities.map(c => c.name);
+                            myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: namesToHighlight });
+                        });
+                        
+                        cities.forEach(city => {
+                            const cityDiv = document.createElement('div');
+                            cityDiv.className = 'city';
+                            cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
+                            
+                            cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
+                            cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
+                            cityDiv.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                myChart.dispatchAction({ type: 'highlight', name: city.name });
+                                if (isMobile) {
+                                    showMobilePanel(city.name);
+                                } else {
+                                    myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
+                                }
+                            });
+                            citySubListDiv.appendChild(cityDiv);
+                        });
+                        cityListContainer.appendChild(provinceDiv);
+                        cityListContainer.appendChild(citySubListDiv);
+                    });
+                    
+                    if (cityListContainer.children.length === 0) {
+                        cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关记录</div>';
+                    }
+                }
+
+                function switchScope(newScope) {
+                    if (currentScope === newScope) return;
+                    currentScope = newScope;
+                    
+                    btnChina.classList.toggle('active', currentScope === 'china');
+                    btnWorld.classList.toggle('active', currentScope === 'world');
+                    
+                    searchInput.value = '';
+                    
+                    let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+                    updateYearFilter(currentData);
+                    updateStatsText(currentData);
+                    
+                    const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
+                    let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
+                    let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
+                    
+                    myChart.setOption({
+                        series: [{
+                            map: targetMap,
+                            zoom: targetZoom,
+                            center: targetCenter,
+                            data: currentData.map(d => ({ name: d.name, value: 1 }))
+                        }]
+                    }, { replaceMerge: ['series'] });
+                    
+                    updateAndRender();
+                }
+
+                btnChina.addEventListener('click', () => switchScope('china'));
+                btnWorld.addEventListener('click', () => switchScope('world'));
+
+                expandCollapseBtn.addEventListener('click', () => {
+                    isAllExpanded = !isAllExpanded;
+                    expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
+                    document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
+                    document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
+                });
+                
+                yearFilter.addEventListener('change', updateAndRender);
+                searchInput.addEventListener('input', updateAndRender);
+                
+                updateYearFilter(mapData.china);
+                updateStatsText(mapData.china);
+                updateAndRender();
+
+                const initialOption = myChart.getOption();
+                if (initialOption && initialOption.series && initialOption.series.length > 0) {
+                    mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
+                    mapInitialView.world.zoom = 1.15;
+                }
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none';
+                document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查各JSON文件路径或网络连接。";
+                console.error("加载地图或旅行数据失败:", error);
+            });
+            window.addEventListener('resize', () => myChart.resize());
+        });
+    </script>
+    <script src="//cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
 </body>
 </html>
