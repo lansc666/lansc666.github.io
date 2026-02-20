@@ -412,35 +412,39 @@
 				}
 
 				function switchScope(newScope) {
-					if (currentScope === newScope) return;
-					currentScope = newScope;
-					
-					btnChina.classList.toggle('active', currentScope === 'china');
-					btnWorld.classList.toggle('active', currentScope === 'world');
-					
-					searchInput.value = '';
-					
-					let currentData = currentScope === 'china' ? mapData.china : mapData.world;
-					updateYearFilter(currentData);
-					updateStatsText(currentData);
-					
-					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
-					
-                    // 动态设置缩放：如果是世界地图，使用设定好的初始视角；如果是中国，使用默认
-					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
-					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
-					
-					myChart.setOption({
-						series: [{
-							map: targetMap,
-							zoom: targetZoom,
-							center: targetCenter,
-							data: currentData.map(d => ({ name: d.name, value: 1 }))
-						}]
-					}, { replaceMerge: ['series'] });
-					
-					updateAndRender();
-				}
+                    if (currentScope === newScope) return;
+                    currentScope = newScope;
+                    
+                    btnChina.classList.toggle('active', currentScope === 'china');
+                    btnWorld.classList.toggle('active', currentScope === 'world');
+                    
+                    searchInput.value = '';
+                    
+                    let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+                    
+                    // 1. 确定目标地图的配置
+                    let targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
+                    let targetConfig = currentScope === 'china' ? mapInitialView.china : mapInitialView.world;
+
+                    updateYearFilter(currentData);
+                    updateStatsText(currentData);
+                    
+                    // 2. 构造新的配置项
+                    let newOption = {
+                        series: [{
+                            map: targetMap,           // 切换地图底图
+                            zoom: targetConfig.zoom,     // 强制设定缩放
+                            center: targetConfig.center, // 强制设定中心点
+                            data: currentData.map(d => ({ name: d.name, value: 1 }))
+                        }]
+                    };
+
+                    // 3. 🔥 核弹级渲染：使用 true 参数强制不合并（notMerge）
+                    // 这会彻底重绘地图，解决所有坐标系错乱、白屏、缩放异常问题
+                    myChart.setOption(newOption, true); 
+                    
+                    updateAndRender();
+                }
 
 				btnChina.addEventListener('click', () => switchScope('china'));
 				btnWorld.addEventListener('click', () => switchScope('world'));
