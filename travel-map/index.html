@@ -159,7 +159,7 @@
             let isAllExpanded = false;
             let currentScope = 'china';
             let mapData = { china: [], world: [] };
-            let mapInitialView = { china: { zoom: 1.15, center: null }, world: { zoom: 1.15, center: null } };
+            let mapInitialView = { china: { zoom: 1.15, center: null }, world: { zoom: 1.15, center: [15, 30] } };
 
             window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
             backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
