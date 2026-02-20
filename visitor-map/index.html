@@ -194,7 +194,7 @@
 			
 			let currentScope = 'china';
 			let mapData = {
-				china:[],
+				china: [],
 				world:[]
 			};
 			let mapInitialView = {
@@ -205,16 +205,14 @@
 			window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
 			backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-			// 绝对安全的加载写法，避免代码被解析器吃掉
 			let p1 = fetch(chinaGeoJsonPath).then(res => res.json());
 			let p2 = fetch(worldGeoJsonPath).then(res => res.json());
 			let p3 = fetch(travelDataChinaPath).then(res => res.json());
 			let p4 = fetch(travelDataWorldPath).then(res => res.json());
 
-			let fetchPromises = new Array(p1, p2, p3, p4);
-
-			Promise.all(fetchPromises)
+			Promise.all()
 			.then(function(results) {
+				// 【关键修复】：按顺序提取 Promise 返回的四个独立数据文件
 				let chinaGeoJson = results;
 				let worldGeoJson = results;
 				let travelDataChina = results;
@@ -227,19 +225,6 @@
 
 				mapData.china = travelDataChina;
 				mapData.world = travelDataWorld;
-
-				let myPieces = new Array({ value: 1, color: '#5cacec' });
-				
-				let initialSeries = new Array({
-					type: 'map',
-					map: 'china-map',
-					roam: true,
-					zoom: 1.15,
-					selectedMode: false,
-					itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-					emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
-					data:[]
-				});
 
 				const baseOption = {
 					tooltip: {
@@ -269,9 +254,10 @@
 					visualMap: {
 						type: 'piecewise',
 						show: false,
-						pieces: myPieces
+						pieces:
 					},
-					series: initialSeries
+					series:
+					}]
 				};
 				
 				myChart.setOption(baseOption);
@@ -349,12 +335,8 @@
 				resetViewBtn.addEventListener('click', () => {
 					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
 					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
-					let resetSeries = new Array({
-						zoom: targetZoom,
-						center: targetCenter
-					});
 					myChart.setOption({
-						series: resetSeries
+						series:
 					});
 				});
 
@@ -376,13 +358,8 @@
 					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
 					let currentSeriesData = listData.map(d => ({ name: d.name, value: 1 }));
 					
-					let updateSeries = new Array({
-						map: targetMap,
-						data: currentSeriesData
-					});
-					
 					myChart.setOption({ 
-						series: updateSeries
+						series:
 					});
 					
 					renderList(listData);
@@ -395,19 +372,19 @@
 					
 					const groupedByProvince = dataToRender.reduce((acc, city) => {
 						let prov = city.province || '未知';
-						if (!acc[prov]) {
-							acc[prov] = [];
+						if (!acc) {
+							acc =[];
 						}
-						acc[prov].push(city);
+						acc.push(city);
 						return acc;
 					}, {});
 					
 					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
-						return groupedByProvince[b].length - groupedByProvince[a].length;
+						return groupedByProvince.length - groupedByProvince.length;
 					});
 					
 					sortedProvinces.forEach(province => {
-						const cities = groupedByProvince[province];
+						const cities = groupedByProvince;
 						const provinceDiv = document.createElement('div');
 						provinceDiv.className = 'province';
 						provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
@@ -468,16 +445,9 @@
 					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
 					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
 					
-					let switchSeries = new Array({
-						map: targetMap,
-						zoom: targetZoom,
-						center: targetCenter
-					});
-					
-					let replaceConfig = new Array('series');
 					myChart.setOption({
-						series: switchSeries
-					}, { replaceMerge: replaceConfig });
+						series:
+					}, { replaceMerge: });
 					
 					updateAndRender();
 				}
@@ -501,7 +471,7 @@
 
 				const initialOption = myChart.getOption();
 				if (initialOption && initialOption.series && initialOption.series.length > 0) {
-					mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
+					mapInitialView.china.zoom = initialOption.series.zoom || 1.15;
 					mapInitialView.world.zoom = 1.15;
 				}
 			})
