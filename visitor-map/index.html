@@ -124,7 +124,6 @@
 		</div>
 		<div id="sidebar">
 			<div id="search-container">
-				<!-- 新增地图切换控制区 -->
 				<div class="map-switch-container">
 					<button id="btn-china" class="map-switch-btn active">中国足迹</button>
 					<button id="btn-world" class="map-switch-btn">世界足迹</button>
@@ -140,9 +139,9 @@
 			</div>
 			<div class="sidebar-footer">
 				<div class="busuanzi-container">
-					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_site_uv">加载中...</span></div>
+					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_site_uv">加载中...</span></div>
 					<div class="busuanzi-item">|</div>
-					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_site_pv">加载中...</span></div>
+					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_site_pv">加载中...</span></div>
 				</div>
 				<p id="stats-counter">统计中...</p>
 				<p>照片均为本人拍摄，版权所有©</p>
@@ -195,7 +194,7 @@
 			let currentScope = 'china';
 			let mapData = {
 				china: [],
-				world:[]
+				world: []
 			};
 			let mapInitialView = {
 				china: { zoom: 1.15, center: null },
@@ -210,13 +209,12 @@
 			let p3 = fetch(travelDataChinaPath).then(res => res.json());
 			let p4 = fetch(travelDataWorldPath).then(res => res.json());
 
-			Promise.all()
+			Promise.all([p1, p2, p3, p4])
 			.then(function(results) {
-				// 【关键修复】：按顺序提取 Promise 返回的四个独立数据文件
-				let chinaGeoJson = results;
-				let worldGeoJson = results;
-				let travelDataChina = results;
-				let travelDataWorld = results;
+				let chinaGeoJson = results[0];
+				let worldGeoJson = results[1];
+				let travelDataChina = results[2];
+				let travelDataWorld = results[3];
 
 				loadingIndicator.style.display = 'none';
 
@@ -254,9 +252,17 @@
 					visualMap: {
 						type: 'piecewise',
 						show: false,
-						pieces:
+						pieces: [{ value: 1, color: '#5cacec' }]
 					},
-					series:
+					series: [{
+						type: 'map',
+						map: 'china-map',
+						roam: true,
+						zoom: 1.15,
+						selectedMode: false,
+						itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+						emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
+						data: mapData.china.map(d => ({ name: d.name, value: 1 }))
 					}]
 				};
 				
@@ -336,7 +342,10 @@
 					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
 					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
 					myChart.setOption({
-						series:
+						series: [{
+							zoom: targetZoom,
+							center: targetCenter
+						}]
 					});
 				});
 
@@ -358,8 +367,11 @@
 					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
 					let currentSeriesData = listData.map(d => ({ name: d.name, value: 1 }));
 					
-					myChart.setOption({ 
-						series:
+					myChart.setOption({ 
+						series: [{
+							map: targetMap,
+							data: currentSeriesData
+						}]
 					});
 					
 					renderList(listData);
@@ -372,19 +384,19 @@
 					
 					const groupedByProvince = dataToRender.reduce((acc, city) => {
 						let prov = city.province || '未知';
-						if (!acc) {
-							acc =[];
+						if (!acc[prov]) {
+							acc[prov] = [];
 						}
-						acc.push(city);
+						acc[prov].push(city);
 						return acc;
 					}, {});
 					
 					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
-						return groupedByProvince.length - groupedByProvince.length;
+						return groupedByProvince[b].length - groupedByProvince[a].length;
 					});
 					
 					sortedProvinces.forEach(province => {
-						const cities = groupedByProvince;
+						const cities = groupedByProvince[province];
 						const provinceDiv = document.createElement('div');
 						provinceDiv.className = 'province';
 						provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
@@ -446,8 +458,13 @@
 					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
 					
 					myChart.setOption({
-						series:
-					}, { replaceMerge: });
+						series: [{
+							map: targetMap,
+							zoom: targetZoom,
+							center: targetCenter,
+							data: currentData.map(d => ({ name: d.name, value: 1 }))
+						}]
+					}, { replaceMerge: ['series'] });
 					
 					updateAndRender();
 				}
@@ -471,7 +488,7 @@
 
 				const initialOption = myChart.getOption();
 				if (initialOption && initialOption.series && initialOption.series.length > 0) {
-					mapInitialView.china.zoom = initialOption.series.zoom || 1.15;
+					mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
 					mapInitialView.world.zoom = 1.15;
 				}
 			})
