@@ -169,7 +169,7 @@
             let p3 = fetch(travelDataChinaPath).then(res => res.json());
             let p4 = fetch(travelDataWorldPath).then(res => res.json());
 
-            Promise.all([p1, p2, p3, p4])
+			Promise.all([p1, p2, p3, p4])
             .then(function(results) {
                 let chinaGeoJson = results[0];
                 let worldGeoJson = results[1];
@@ -178,11 +178,22 @@
 
                 loadingIndicator.style.display = 'none';
 
+                // --- 修复开始：处理 world.geojson 的字段映射 ---
+                // 你的世界地图数据里没有 "name" 字段，只有 "NAME_CHN"。
+                // 必须手动把 NAME_CHN 赋值给 name，ECharts 才能识别！
+                worldGeoJson.features.forEach(function(feature) {
+                    feature.properties.name = feature.properties.NAME_CHN; 
+                });
+                // --- 修复结束 ---
+
                 echarts.registerMap('china-map', chinaGeoJson);
                 echarts.registerMap('world-map', worldGeoJson);
 
                 mapData.china = travelDataChina;
                 mapData.world = travelDataWorld;
+
+                // 同时也修正一下世界地图的初始视角，防止缩放不对变白屏
+                mapInitialView.world = { zoom: 1.2, center: [10, 30] }; // 中心点设在欧非大陆
 
                 const baseOption = {
                     tooltip: {
@@ -393,70 +404,71 @@
                         });
                         cityListContainer.appendChild(provinceDiv);
                         cityListContainer.appendChild(citySubListDiv);
-                    });
-                    
-                    if (cityListContainer.children.length === 0) {
-                        cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关记录</div>';
-                    }
-                }
+					});
+					
+					if (cityListContainer.children.length === 0) {
+						cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关记录</div>';
+					}
+				}
 
-                function switchScope(newScope) {
-                    if (currentScope === newScope) return;
-                    currentScope = newScope;
-                    
-                    btnChina.classList.toggle('active', currentScope === 'china');
-                    btnWorld.classList.toggle('active', currentScope === 'world');
-                    
-                    searchInput.value = '';
-                    
-                    let currentData = currentScope === 'china' ? mapData.china : mapData.world;
-                    updateYearFilter(currentData);
-                    updateStatsText(currentData);
-                    
-                    const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
-                    let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
-                    let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
-                    
-                    myChart.setOption({
-                        series: [{
-                            map: targetMap,
-                            zoom: targetZoom,
-                            center: targetCenter,
-                            data: currentData.map(d => ({ name: d.name, value: 1 }))
-                        }]
-                    }, { replaceMerge: ['series'] });
-                    
-                    updateAndRender();
-                }
+				function switchScope(newScope) {
+					if (currentScope === newScope) return;
+					currentScope = newScope;
+					
+					btnChina.classList.toggle('active', currentScope === 'china');
+					btnWorld.classList.toggle('active', currentScope === 'world');
+					
+					searchInput.value = '';
+					
+					let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+					updateYearFilter(currentData);
+					updateStatsText(currentData);
+					
+					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
+					
+                    // 动态设置缩放：如果是世界地图，使用设定好的初始视角；如果是中国，使用默认
+					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
+					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
+					
+					myChart.setOption({
+						series: [{
+							map: targetMap,
+							zoom: targetZoom,
+							center: targetCenter,
+							data: currentData.map(d => ({ name: d.name, value: 1 }))
+						}]
+					}, { replaceMerge: ['series'] });
+					
+					updateAndRender();
+				}
 
-                btnChina.addEventListener('click', () => switchScope('china'));
-                btnWorld.addEventListener('click', () => switchScope('world'));
+				btnChina.addEventListener('click', () => switchScope('china'));
+				btnWorld.addEventListener('click', () => switchScope('world'));
 
-                expandCollapseBtn.addEventListener('click', () => {
-                    isAllExpanded = !isAllExpanded;
-                    expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
-                    document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
-                    document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
-                });
-                
-                yearFilter.addEventListener('change', updateAndRender);
-                searchInput.addEventListener('input', updateAndRender);
-                
-                updateYearFilter(mapData.china);
-                updateStatsText(mapData.china);
-                updateAndRender();
+				expandCollapseBtn.addEventListener('click', () => {
+					isAllExpanded = !isAllExpanded;
+					expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
+					document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
+					document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
+				});
+				
+				yearFilter.addEventListener('change', updateAndRender);
+				searchInput.addEventListener('input', updateAndRender);
+				
+				updateYearFilter(mapData.china);
+				updateStatsText(mapData.china);
+				updateAndRender();
 
-                const initialOption = myChart.getOption();
-                if (initialOption && initialOption.series && initialOption.series.length > 0) {
-                    mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
-                    mapInitialView.world.zoom = 1.15;
-                }
-            })
-            .catch(error => {
-                loadingIndicator.style.display = 'none';
-                document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查各JSON文件路径或网络连接。";
-                console.error("加载地图或旅行数据失败:", error);
-            });
+				const initialOption = myChart.getOption();
+				if (initialOption && initialOption.series && initialOption.series.length > 0) {
+					mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
+				}
+			})
+			.catch(error => {
+				loadingIndicator.style.display = 'none';
+				document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查各JSON文件路径或网络连接。";
+				console.error("加载地图或旅行数据失败:", error);
+			});
             window.addEventListener('resize', () => myChart.resize());
         });
     </script>
