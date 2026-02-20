@@ -159,7 +159,7 @@
             let isAllExpanded = false;
             let currentScope = 'china';
             let mapData = { china: [], world: [] };
-            let mapInitialView = { china: { zoom: 1.15, center: null }, world: { zoom: 1.15, center: [15, 30] } };
+            let mapInitialView = { china: { zoom: 1.15, center: null }, world: { zoom: 1.15, center: null } };
 
             window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
             backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
@@ -193,7 +193,7 @@
                 mapData.world = travelDataWorld;
 
                 // 同时也修正一下世界地图的初始视角，防止缩放不对变白屏
-                mapInitialView.world = { zoom: 1.2, center: [10, 30] }; // 中心点设在欧非大陆
+                mapInitialView.world = { zoom: 1.2, center: null }; // 中心点设在欧非大陆
 
                 const baseOption = {
                     tooltip: {
