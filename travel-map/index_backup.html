@@ -20,13 +20,6 @@
 	.reset-view-btn { position: absolute; bottom: 10px; right: 10px; width: 32px; height: 32px; background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #333; cursor: pointer; z-index: 10; transition: background-color 0.2s, transform 0.2s; }
 	.reset-view-btn:hover { background-color: #fff; transform: rotate(90deg); }
 	#sidebar { flex: 1; min-width: 300px; display: flex; flex-direction: column; border-left: 1px solid #e0e0e0; background-color: #fafcfe; }
-	
-	/* --- 新增：地图切换按钮样式 --- */
-	.map-switch-container { display: flex; gap: 10px; padding-bottom: 15px; border-bottom: 1px dashed #e0e0e0; margin-bottom: 5px; }
-	.map-switch-btn { flex: 1; padding: 8px 0; font-size: 14px; border-radius: 6px; cursor: pointer; border: 1px solid #ccc; background-color: #fff; color: #555; transition: all 0.2s; font-weight: 500; }
-	.map-switch-btn:hover { background-color: #f0f8ff; border-color: #5cacec; }
-	.map-switch-btn.active { background-color: #5cacec; border-color: #5cacec; color: #fff; box-shadow: 0 2px 6px rgba(92,172,236,0.3); }
-
 	#search-container { padding: 20px 25px; border-bottom: 1px solid #e0e0e0; display: flex; flex-direction: column; gap: 10px; }
 	.filter-controls { display: flex; gap: 10px; }
 	#search { flex-grow: 1; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -78,21 +71,55 @@
 	#mobile-tooltip-panel.active { transform: translateY(0); }
 	
 	.panel-header {
-		position: relative;
+		position: relative; /* 为内部的关闭按钮提供定位基准 */
 		display: flex;
-		justify-content: center;
+		justify-content: center; /* 让内部的城市名水平居中 */
 		align-items: center;
 		margin-bottom: 8px;
 	}
-	.panel-header .city { font-size: 20px; font-weight: bold; margin: 0; }
-	#mobile-tooltip-close { position: absolute; top: 50%; right: 0; transform: translateY(-50%); font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; padding: 5px; }
+	.panel-header .city {
+		font-size: 20px;
+		font-weight: bold;
+		margin: 0;
+	}
+	#mobile-tooltip-close {
+		position: absolute;
+		top: 50%; /* 垂直居中于头部 */
+		right: 0; /* 紧贴头部右侧 */
+		transform: translateY(-50%); /* 精准垂直居中 */
+		font-size: 24px;
+		color: #aaa;
+		border: none;
+		background: none;
+		cursor: pointer;
+		padding: 5px;
+	}
 	
-	.panel-body { overflow-y: auto; text-align: center; }
+	.panel-body {
+		overflow-y: auto;
+		text-align: center;
+	}
 	.panel-body .time { font-size: 14px; color: #666; margin-bottom: 8px; }
 	.panel-body .desc { font-size: 15px; font-style: italic; margin-bottom: 10px; }
 	
-	.panel-image-container { width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; max-height: 45vh; overflow-y: auto; border-radius: 8px; margin-top: 10px; background-color: #f0f0f0; -webkit-overflow-scrolling: touch; }
-	.panel-image-container img { width: 100%; height: auto; display: block; cursor: zoom-in; }
+	.panel-image-container {
+		width: 100%;
+		max-width: 400px; /* 给一个最大宽度，以便margin:auto生效 */
+		margin-left: auto;  /* 【修复】让块级元素本身水平居中 */
+		margin-right: auto; /* 【修复】让块级元素本身水平居中 */
+		max-height: 45vh;
+		overflow-y: auto;
+		border-radius: 8px;
+		margin-top: 10px;
+		background-color: #f0f0f0;
+		-webkit-overflow-scrolling: touch;
+	}
+	.panel-image-container img {
+		width: 100%;
+		height: auto;
+		display: block;
+		cursor: zoom-in;
+	}
 	
 	/* --- 响应式布局 --- */
 	@media (max-width: 900px) {
@@ -124,13 +151,8 @@
 		</div>
 		<div id="sidebar">
 			<div id="search-container">
-				<!-- 新增地图切换控制区 -->
-				<div class="map-switch-container">
-					<button id="btn-china" class="map-switch-btn active">中国足迹</button>
-					<button id="btn-world" class="map-switch-btn">世界足迹</button>
-				</div>
 				<div class="filter-controls">
-					<input type="text" id="search" placeholder="搜索城市/国家...">
+					<input type="text" id="search" placeholder="搜索城市...">
 					<select id="year-filter"></select>
 				</div>
 				<button id="expandCollapseBtn">展开全部</button>
@@ -164,11 +186,8 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
-			// 文件路径配置
-			const chinaGeoJsonPath = "/travel-map/city_merged.geojson";
-			const worldGeoJsonPath = "/travel-map/world.geojson";
-			const travelDataChinaPath = "/travel-map/traveldata_china.json";
-			const travelDataWorldPath = "/travel-map/traveldata_world.json";
+			const geoJsonPath = "/travel-map/city_merged.geojson";
+			const travelDataPath = "/travel-map/travelData.json";
 			
 			const myChart = echarts.init(document.getElementById('chinaMap'));
 			const cityListContainer = document.getElementById('cityListContainer');
@@ -180,9 +199,6 @@
 			const backToTopBtn = document.querySelector('.back-to-top');
 			const expandCollapseBtn = document.getElementById('expandCollapseBtn');
 			
-			const btnChina = document.getElementById('btn-china');
-			const btnWorld = document.getElementById('btn-world');
-			
 			const isMobile = window.matchMedia("(max-width: 900px)").matches;
 			const mobileTooltipPanel = document.getElementById('mobile-tooltip-panel');
 			const mobileTooltipCity = document.getElementById('mobile-tooltip-city');
@@ -191,33 +207,24 @@
 			let imageViewer = null;
 
 			let isAllExpanded = false;
-			
-			// 全局状态管理
-			let currentScope = 'china'; // 当前视图：'china' 或 'world'
-			let mapData = {
-				china: [],
-				world:[]
-			};
-			let mapInitialView = {
-				china: { zoom: 1.15, center: null },
-				world: { zoom: 1.15, center: null }
-			};
+			let originalTravelData = [];
+			let initialZoom, initialCenter;
 
 			window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
 			backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-			// 并发加载4个文件
-			Promise.all()
-			.then(() => {
+			Promise.all([
+				fetch(geoJsonPath).then(res => res.json()),
+				fetch(travelDataPath).then(res => res.json())
+			])
+			.then(([geoJson, travelData]) => {
 				loadingIndicator.style.display = 'none';
-				
-				// 注册两张地图
-				echarts.registerMap('china-map', chinaGeoJson);
-				echarts.registerMap('world-map', worldGeoJson);
-				
-				// 保存数据
-				mapData.china = travelDataChina;
-				mapData.world = travelDataWorld;
+				echarts.registerMap('china-city', geoJson);
+				originalTravelData = travelData;
+
+				const cityCount = originalTravelData.length;
+				const provinceCount = new Set(originalTravelData.map(d => d.province)).size;
+				statsCounter.textContent = `已走过 ${provinceCount} 个省份 / ${cityCount} 座城市`;
 
 				const baseOption = {
 					tooltip: {
@@ -228,7 +235,7 @@
 						hideDelay: 200,
 						formatter: function(params) {
 							if (params.data && params.data.value === 1) {
-								const info = mapData.find(d => d.name === params.name);
+								const info = originalTravelData.find(d => d.name === params.name);
 								if (info) {
 									const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
 									const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy">` : '';
@@ -246,9 +253,17 @@
 					visualMap: {
 						type: 'piecewise',
 						show: false,
-						pieces:,
+						pieces: [{ value: 1, color: '#5cacec' }],
 					},
-					series:
+					series: [{
+						type: 'map',
+						map: 'china-city',
+						roam: true,
+						zoom: 1.15,
+						selectedMode: false,
+						itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+						emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
+						data: []
 					}]
 				};
 				myChart.setOption(baseOption);
@@ -267,11 +282,13 @@
 				
 				myChart.on('click', function (params) {
 					if (params && params.name) {
+						// 在移动端，调用新函数来显示面板
 						if (isMobile) {
 							myChart.dispatchAction({ type: 'hideTip' });
 							showMobilePanel(params.name);
 						}
 					} else {
+						// 如果点击的是地图的空白区域
 						if (isMobile) {
 							mobileTooltipPanel.classList.remove('active');
 						}
@@ -284,7 +301,7 @@
 				});
 				
 				function showMobilePanel(cityName) {
-					const info = mapData.find(d => d.name === cityName);
+					const info = originalTravelData.find(d => d.name === cityName);
 					if (info) {
 						mobileTooltipCity.textContent = info.name;
 						const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
@@ -302,99 +319,80 @@
 					}
 				}					
 				
-				// 更新年份下拉菜单
-				function updateYearFilter(data) {
-					let sortedYears = Array.from(new Set(data.map(d => d.time.substring(0, 4)))).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
-					let optionsHtml = '<option value="all">全部年份</option>';
-					sortedYears.forEach(year => {
-						optionsHtml += `<option value="${year}">${year}年</option>`;
-						if (year === '2022' && new Set(data.map(d => d.time)).has("常住")) {
-							optionsHtml += '<option value="常住">常住</option>';
-						}
-					});
-					yearFilter.innerHTML = optionsHtml;
-				}
-
-				// 更新统计文案
-				function updateStatsText(data) {
-					const count = data.length;
-					const groupCount = new Set(data.map(d => d.province)).size;
-					const label1 = currentScope === 'china' ? '省份' : '国家/地区';
-					const label2 = currentScope === 'china' ? '城市' : '城市/地点';
-					statsCounter.textContent = `已走过 ${groupCount} 个${label1} / ${count} 个${label2}`;
-				}
-
-				// 视图重置逻辑
+				let sortedYears = Array.from(new Set(originalTravelData.map(d => d.time.substring(0, 4)))).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
+				let optionsHtml = '<option value="all">全部年份</option>';
+				sortedYears.forEach(year => {
+					optionsHtml += `<option value="${year}">${year}年</option>`;
+					if (year === '2022' && new Set(originalTravelData.map(d => d.time)).has("常住")) {
+						optionsHtml += '<option value="常住">常住</option>';
+					}
+				});
+				yearFilter.innerHTML = optionsHtml;
+				
 				resetViewBtn.addEventListener('click', () => {
 					myChart.setOption({
-						series:.zoom,
-							center: mapInitialView.center
+						series: [{
+							zoom: initialZoom,
+							center: initialCenter
 						}]
 					});
 				});
 
-				// 核心筛选与渲染函数
 				function updateAndRender() {
 					const selectedYear = yearFilter.value;
 					const keyword = searchInput.value.trim().toLowerCase();
-					let filteredData = mapData;
-					
+					let filteredData = originalTravelData;
 					if (selectedYear !== 'all') {
 						if (selectedYear === '常住') {
-							filteredData = filteredData.filter(d => d.time === '常住');
+							filteredData = originalTravelData.filter(d => d.time === '常住');
 						} else {
-							filteredData = filteredData.filter(d => d.time.startsWith(selectedYear));
+							filteredData = originalTravelData.filter(d => d.time.startsWith(selectedYear));
 						}
 					}
-					
 					const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
-					
-					myChart.setOption({ series: });
+					myChart.setOption({ series: [{ data: listData.map(d => ({ name: d.name, value: 1 })) }] });
 					renderList(listData);
 				}
 
-				// 渲染右侧列表
 				function renderList(dataToRender) {
 					cityListContainer.innerHTML = '';
 					isAllExpanded = false;
 					expandCollapseBtn.textContent = '展开全部';
-					
 					const groupedByProvince = dataToRender.reduce((acc, city) => {
-						(acc = acc ||[]).push(city);
+						(acc[city.province] = acc[city.province] || []).push(city);
 						return acc;
 					}, {});
-					
-					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => groupedByProvince.length - groupedByProvince.length);
-					
+					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => groupedByProvince[b].length - groupedByProvince[a].length);
 					sortedProvinces.forEach(province => {
-						const cities = groupedByProvince;
+						const cities = groupedByProvince[province];
 						const provinceDiv = document.createElement('div');
 						provinceDiv.className = 'province';
 						provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
-						
 						const citySubListDiv = document.createElement('div');
 						citySubListDiv.className = 'city-list';
-						
 						provinceDiv.addEventListener('click', () => {
 							provinceDiv.classList.toggle('expanded');
 							citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
 							myChart.dispatchAction({ type: 'downplay' });
 							myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: cities.map(c => c.name) });
 						});
-						
 						cities.forEach(city => {
 							const cityDiv = document.createElement('div');
 							cityDiv.className = 'city';
 							cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
-							
 							cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
 							cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
 							cityDiv.addEventListener('click', (e) => {
 								e.stopPropagation();
+								
+								// 无论在哪个端，都先高亮地图上对应的城市
 								myChart.dispatchAction({ type: 'highlight', name: city.name });
+
 								if (isMobile) {
+									// 在移动端，直接调用函数显示底部面板
 									showMobilePanel(city.name);
 								} else {
+									// 在PC端，保持原样，显示悬浮提示框
 									myChart.dispatchAction({ type: 'showTip', seriesIndex: 0, name: city.name });
 								}
 							});
@@ -403,40 +401,10 @@
 						cityListContainer.appendChild(provinceDiv);
 						cityListContainer.appendChild(citySubListDiv);
 					});
-					
-					if (cityListContainer.children.length === 0) {
-						cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关记录</div>';
+					 if (cityListContainer.children.length === 0) {
+						cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关城市</div>';
 					}
 				}
-
-				// 切换地图范围逻辑
-				function switchScope(newScope) {
-					if (currentScope === newScope) return;
-					currentScope = newScope;
-					
-					// 切换按钮样式
-					btnChina.classList.toggle('active', currentScope === 'china');
-					btnWorld.classList.toggle('active', currentScope === 'world');
-					
-					// 清空搜索状态
-					searchInput.value = '';
-					
-					// 更新对应的年份和统计
-					updateYearFilter(mapData);
-					updateStatsText(mapData);
-					
-					// 切换ECharts底图
-					myChart.setOption({
-						series:.zoom,
-							center: mapInitialView.center
-						}]
-					}, { replaceMerge: });
-					
-					updateAndRender();
-				}
-
-				btnChina.addEventListener('click', () => switchScope('china'));
-				btnWorld.addEventListener('click', () => switchScope('world'));
 
 				expandCollapseBtn.addEventListener('click', () => {
 					isAllExpanded = !isAllExpanded;
@@ -444,24 +412,18 @@
 					document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
 					document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
 				});
-				
 				yearFilter.addEventListener('change', updateAndRender);
 				searchInput.addEventListener('input', updateAndRender);
 				
-				// 初始调用
-				updateYearFilter(mapData.china);
-				updateStatsText(mapData.china);
 				updateAndRender();
 
-				// 抓取初始缩放状态（可选补偿）
 				const initialOption = myChart.getOption();
-				if (initialOption && initialOption.series) {
-					mapInitialView.china.zoom = initialOption.series.zoom || 1.15;
-				}
+				initialZoom = initialOption.series[0].zoom;
+				initialCenter = initialOption.series[0].center;
 			})
 			.catch(error => {
 				loadingIndicator.style.display = 'none';
-				document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查各JSON文件路径或网络连接。";
+				document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查文件路径或网络连接，并确保JSON格式正确。";
 				console.error("加载地图或旅行数据失败:", error);
 			});
 			window.addEventListener('resize', () => myChart.resize());
