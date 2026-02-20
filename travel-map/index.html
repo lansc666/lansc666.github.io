@@ -129,8 +129,9 @@
 
     <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
-    <script>
+	<script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- 1. 基础配置 ---
             const chinaGeoJsonPath = "/travel-map/city_merged.geojson";
             const worldGeoJsonPath = "/travel-map/world.geojson";
             const travelDataChinaPath = "/travel-map/traveldata_china.json";
@@ -145,11 +146,12 @@
             const resetViewBtn = document.querySelector('.reset-view-btn');
             const backToTopBtn = document.querySelector('.back-to-top');
             const expandCollapseBtn = document.getElementById('expandCollapseBtn');
-            
             const btnChina = document.getElementById('btn-china');
             const btnWorld = document.getElementById('btn-world');
             
             const isMobile = window.matchMedia("(max-width: 900px)").matches;
+            
+            // 移动端面板元素
             const mobileTooltipPanel = document.getElementById('mobile-tooltip-panel');
             const mobileTooltipCity = document.getElementById('mobile-tooltip-city');
             const mobileTooltipBody = document.getElementById('mobile-tooltip-body');
@@ -158,18 +160,27 @@
 
             let isAllExpanded = false;
             let currentScope = 'china';
+            
             let mapData = { china: [], world: [] };
-            let mapInitialView = { china: { zoom: 1.15, center: null }, world: { zoom: 1.15, center: null } };
+
+            // 【关键点1】定义死的坐标，防止 ECharts 算错跑偏
+            // 中国中心：经度104，纬度36
+            // 世界中心：经度0，纬度20 (大西洋/非洲位置，视野好)
+            const mapConfigs = {
+                china: { zoom: 1.15, center: [104.5, 36] },
+                world: { zoom: 1.2, center: [0, 20] } 
+            };
 
             window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
             backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
+            // --- 2. 加载数据 ---
             let p1 = fetch(chinaGeoJsonPath).then(res => res.json());
             let p2 = fetch(worldGeoJsonPath).then(res => res.json());
             let p3 = fetch(travelDataChinaPath).then(res => res.json());
             let p4 = fetch(travelDataWorldPath).then(res => res.json());
 
-			Promise.all([p1, p2, p3, p4])
+            Promise.all([p1, p2, p3, p4])
             .then(function(results) {
                 let chinaGeoJson = results[0];
                 let worldGeoJson = results[1];
@@ -178,13 +189,16 @@
 
                 loadingIndicator.style.display = 'none';
 
-                // --- 修复开始：处理 world.geojson 的字段映射 ---
-                // 你的世界地图数据里没有 "name" 字段，只有 "NAME_CHN"。
-                // 必须手动把 NAME_CHN 赋值给 name，ECharts 才能识别！
-                worldGeoJson.features.forEach(function(feature) {
-                    feature.properties.name = feature.properties.NAME_CHN; 
-                });
-                // --- 修复结束 ---
+                // 【关键点2】修复 world.geojson 的名字
+                // ECharts 计算地图边界和渲染都需要 'name' 属性
+                if (worldGeoJson.features) {
+                    worldGeoJson.features.forEach(function(feature) {
+                        // 把 NAME_CHN 赋值给 name
+                        if (feature.properties && feature.properties.NAME_CHN) {
+                            feature.properties.name = feature.properties.NAME_CHN;
+                        }
+                    });
+                }
 
                 echarts.registerMap('china-map', chinaGeoJson);
                 echarts.registerMap('world-map', worldGeoJson);
@@ -192,53 +206,72 @@
                 mapData.china = travelDataChina;
                 mapData.world = travelDataWorld;
 
-                // 同时也修正一下世界地图的初始视角，防止缩放不对变白屏
-                mapInitialView.world = { zoom: 1.2, center: null }; // 中心点设在欧非大陆
+                // 初始化显示中国地图
+                renderMap('china');
 
-                const baseOption = {
-                    tooltip: {
-                        show: !isMobile,
-                        trigger: 'item',
-                        confine: true,
-                        enterable: true,
-                        hideDelay: 200,
-                        formatter: function(params) {
-                            if (params.data && params.data.value === 1) {
-                                let currentData = currentScope === 'china' ? mapData.china : mapData.world;
-                                const info = currentData.find(d => d.name === params.name);
-                                if (info) {
-                                    const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
-                                    const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy">` : '';
-                                    return `<div class="tooltip-card">
-                                                <div class="city">${info.name}</div>
-                                                <div class="time">首次访问：${info.time}</div>
-                                                ${descriptionHtml}
-                                                <div class="image-container">${imageHtml}</div>
-                                            </div>`;
+                // --- 3. 核心渲染函数 ---
+                function renderMap(scope) {
+                    let targetMap = scope === 'china' ? 'china-map' : 'world-map';
+                    let targetData = scope === 'china' ? mapData.china : mapData.world;
+                    let config = mapConfigs[scope];
+
+                    // 构造 Series 数据
+                    let seriesData = targetData.map(d => ({ name: d.name, value: 1 }));
+
+                    let option = {
+                        tooltip: {
+                            show: !isMobile,
+                            trigger: 'item',
+                            confine: true,
+                            enterable: true,
+                            hideDelay: 200,
+                            formatter: function(params) {
+                                if (params.data && params.data.value === 1) {
+                                    const info = targetData.find(d => d.name === params.name);
+                                    if (info) {
+                                        const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
+                                        const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy">` : '';
+                                        return `<div class="tooltip-card">
+                                                    <div class="city">${info.name}</div>
+                                                    <div class="time">首次访问：${info.time}</div>
+                                                    ${descriptionHtml}
+                                                    <div class="image-container">${imageHtml}</div>
+                                                </div>`;
+                                    }
                                 }
+                                return params.name;
                             }
-                            return params.name;
-                        }
-                    },
-                    visualMap: {
-                        type: 'piecewise',
-                        show: false,
-                        pieces: [{ value: 1, color: '#5cacec' }]
-                    },
-                    series: [{
-                        type: 'map',
-                        map: 'china-map',
-                        roam: true,
-                        zoom: 1.15,
-                        selectedMode: false,
-                        itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
-                        emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
-                        data: mapData.china.map(d => ({ name: d.name, value: 1 }))
-                    }]
-                };
-                
-                myChart.setOption(baseOption);
+                        },
+                        visualMap: {
+                            type: 'piecewise',
+                            show: false,
+                            pieces: [{ value: 1, color: '#5cacec' }]
+                        },
+                        series: [{
+                            type: 'map',
+                            map: targetMap,
+                            roam: true,
+                            // 【关键点3】强制应用中心点和缩放
+                            center: config.center,
+                            zoom: config.zoom,
+                            selectedMode: false,
+                            itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+                            emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
+                            data: seriesData
+                        }]
+                    };
 
+                    // 【关键点4】使用 true 参数 (notMerge)
+                    // 这会强制销毁旧图，重建新图，解决坐标系残留导致的白屏
+                    myChart.setOption(option, true);
+                    
+                    // 更新周边 UI
+                    updateYearFilter(targetData);
+                    updateStatsText(targetData);
+                    renderList(targetData);
+                }
+
+                // --- 4. 交互逻辑 ---
                 if (!isMobile) {
                     myChart.on('showtip', function() {
                         setTimeout(() => {
@@ -258,9 +291,7 @@
                             showMobilePanel(params.name);
                         }
                     } else {
-                        if (isMobile) {
-                            mobileTooltipPanel.classList.remove('active');
-                        }
+                        if (isMobile) mobileTooltipPanel.classList.remove('active');
                         myChart.dispatchAction({ type: 'hideTip' });
                     }
                 });                 
@@ -289,6 +320,34 @@
                     }
                 }                   
                 
+                // 切换按钮逻辑
+                function switchScope(newScope) {
+                    if (currentScope === newScope) return;
+                    currentScope = newScope;
+                    
+                    btnChina.classList.toggle('active', currentScope === 'china');
+                    btnWorld.classList.toggle('active', currentScope === 'world');
+                    searchInput.value = '';
+
+                    // 调用核心渲染
+                    renderMap(currentScope);
+                }
+
+                btnChina.addEventListener('click', () => switchScope('china'));
+                btnWorld.addEventListener('click', () => switchScope('world'));
+
+                // 重置视图
+                resetViewBtn.addEventListener('click', () => {
+                    let config = mapConfigs[currentScope];
+                    myChart.setOption({
+                        series: [{
+                            center: config.center,
+                            zoom: config.zoom
+                        }]
+                    });
+                });
+
+                // 筛选与列表逻辑
                 function updateYearFilter(data) {
                     let sortedYears = Array.from(new Set(data.map(d => d.time.substring(0, 4)))).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
                     let optionsHtml = '<option value="all">全部年份</option>';
@@ -309,21 +368,11 @@
                     statsCounter.textContent = `已走过 ${groupCount} 个${label1} / ${count} 个${label2}`;
                 }
 
-                resetViewBtn.addEventListener('click', () => {
-                    let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
-                    let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
-                    myChart.setOption({
-                        series: [{
-                            zoom: targetZoom,
-                            center: targetCenter
-                        }]
-                    });
-                });
-
                 function updateAndRender() {
                     const selectedYear = yearFilter.value;
                     const keyword = searchInput.value.trim().toLowerCase();
-                    let filteredData = currentScope === 'china' ? mapData.china : mapData.world;
+                    let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+                    let filteredData = currentData;
                     
                     if (selectedYear !== 'all') {
                         if (selectedYear === '常住') {
@@ -335,14 +384,9 @@
                     
                     const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
                     
-                    const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
-                    let currentSeriesData = listData.map(d => ({ name: d.name, value: 1 }));
-                    
+                    // 只更新数据，不重置地图视图
                     myChart.setOption({ 
-                        series: [{
-                            map: targetMap,
-                            data: currentSeriesData
-                        }]
+                        series: [{ data: listData.map(d => ({ name: d.name, value: 1 })) }] 
                     });
                     
                     renderList(listData);
@@ -355,9 +399,7 @@
                     
                     const groupedByProvince = dataToRender.reduce((acc, city) => {
                         let prov = city.province || '未知';
-                        if (!acc[prov]) {
-                            acc[prov] = [];
-                        }
+                        if (!acc[prov]) { acc[prov] = []; }
                         acc[prov].push(city);
                         return acc;
                     }, {});
@@ -371,7 +413,6 @@
                         const provinceDiv = document.createElement('div');
                         provinceDiv.className = 'province';
                         provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
-                        
                         const citySubListDiv = document.createElement('div');
                         citySubListDiv.className = 'city-list';
                         
@@ -379,7 +420,6 @@
                             provinceDiv.classList.toggle('expanded');
                             citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
                             myChart.dispatchAction({ type: 'downplay' });
-                            
                             let namesToHighlight = cities.map(c => c.name);
                             myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: namesToHighlight });
                         });
@@ -388,7 +428,6 @@
                             const cityDiv = document.createElement('div');
                             cityDiv.className = 'city';
                             cityDiv.innerHTML = `<div class="city-name">${city.name}</div><div class="travel-time">${city.time}</div>`;
-                            
                             cityDiv.addEventListener('mouseover', () => myChart.dispatchAction({ type: 'highlight', name: city.name }));
                             cityDiv.addEventListener('mouseout', () => myChart.dispatchAction({ type: 'downplay', name: city.name }));
                             cityDiv.addEventListener('click', (e) => {
@@ -404,75 +443,28 @@
                         });
                         cityListContainer.appendChild(provinceDiv);
                         cityListContainer.appendChild(citySubListDiv);
-					});
-					
-					if (cityListContainer.children.length === 0) {
-						cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关记录</div>';
-					}
-				}
-
-				function switchScope(newScope) {
-                    if (currentScope === newScope) return;
-                    currentScope = newScope;
-                    
-                    btnChina.classList.toggle('active', currentScope === 'china');
-                    btnWorld.classList.toggle('active', currentScope === 'world');
-                    
-                    searchInput.value = '';
-                    
-                    let currentData = currentScope === 'china' ? mapData.china : mapData.world;
-                    
-                    // 1. 确定目标地图的配置
-                    let targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
-                    let targetConfig = currentScope === 'china' ? mapInitialView.china : mapInitialView.world;
-
-                    updateYearFilter(currentData);
-                    updateStatsText(currentData);
-                    
-                    // 2. 构造新的配置项
-                    let newOption = {
-                        series: [{
-                            map: targetMap,           // 切换地图底图
-                            zoom: targetConfig.zoom,     // 强制设定缩放
-                            center: targetConfig.center, // 强制设定中心点
-                            data: currentData.map(d => ({ name: d.name, value: 1 }))
-                        }]
-                    };
-
-                    // 3. 🔥 核弹级渲染：使用 true 参数强制不合并（notMerge）
-                    // 这会彻底重绘地图，解决所有坐标系错乱、白屏、缩放异常问题
-                    myChart.setOption(newOption, true); 
-                    
-                    updateAndRender();
+                    });
+                    if (cityListContainer.children.length === 0) {
+                        cityListContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">未找到相关记录</div>';
+                    }
                 }
 
-				btnChina.addEventListener('click', () => switchScope('china'));
-				btnWorld.addEventListener('click', () => switchScope('world'));
+                expandCollapseBtn.addEventListener('click', () => {
+                    isAllExpanded = !isAllExpanded;
+                    expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
+                    document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
+                    document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
+                });
+                
+                yearFilter.addEventListener('change', updateAndRender);
+                searchInput.addEventListener('input', updateAndRender);
 
-				expandCollapseBtn.addEventListener('click', () => {
-					isAllExpanded = !isAllExpanded;
-					expandCollapseBtn.textContent = isAllExpanded ? '折叠全部' : '展开全部';
-					document.querySelectorAll('.province').forEach(p => p.classList.toggle('expanded', isAllExpanded));
-					document.querySelectorAll('.city-list').forEach(l => l.style.display = isAllExpanded ? 'block' : 'none');
-				});
-				
-				yearFilter.addEventListener('change', updateAndRender);
-				searchInput.addEventListener('input', updateAndRender);
-				
-				updateYearFilter(mapData.china);
-				updateStatsText(mapData.china);
-				updateAndRender();
-
-				const initialOption = myChart.getOption();
-				if (initialOption && initialOption.series && initialOption.series.length > 0) {
-					mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
-				}
-			})
-			.catch(error => {
-				loadingIndicator.style.display = 'none';
-				document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查各JSON文件路径或网络连接。";
-				console.error("加载地图或旅行数据失败:", error);
-			});
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none';
+                document.getElementById('chinaMap').innerHTML = "数据加载失败，请检查各JSON文件路径或网络连接。";
+                console.error("加载地图或旅行数据失败:", error);
+            });
             window.addEventListener('resize', () => myChart.resize());
         });
     </script>
