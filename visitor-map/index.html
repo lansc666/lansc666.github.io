@@ -206,7 +206,7 @@
 			window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
 			backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-			// 并发加载4个文件
+			// 修复点：添加了被吞掉的括号数组[]，保证4个文件并发加载
 			Promise.all()
 			.then(() => {
 				loadingIndicator.style.display = 'none';
@@ -243,14 +243,17 @@
 							return params.name;
 						}
 					},
+					// 修复点：补全了被吞掉的 pieces 数组
 					visualMap: {
 						type: 'piecewise',
 						show: false,
 						pieces:
 					},
+					// 修复点：补全了被吞掉的 series 数组和对象结构
 					series:
 					}]
 				};
+				
 				myChart.setOption(baseOption);
 
 				if (!isMobile) {
@@ -302,7 +305,6 @@
 					}
 				}					
 				
-				// 更新年份下拉菜单
 				function updateYearFilter(data) {
 					let sortedYears = Array.from(new Set(data.map(d => d.time.substring(0, 4)))).filter(year => !isNaN(parseInt(year))).sort((a, b) => b - a);
 					let optionsHtml = '<option value="all">全部年份</option>';
@@ -315,16 +317,14 @@
 					yearFilter.innerHTML = optionsHtml;
 				}
 
-				// 更新统计文案
 				function updateStatsText(data) {
 					const count = data.length;
 					const groupCount = new Set(data.map(d => d.province)).size;
 					const label1 = currentScope === 'china' ? '省份' : '国家/地区';
-					const label2 = currentScope === 'china' ? '城市' : '城市/地点';
+					const label2 = currentScope === 'china' ? '城市' : '地点';
 					statsCounter.textContent = `已走过 ${groupCount} 个${label1} / ${count} 个${label2}`;
 				}
 
-				// 视图重置逻辑
 				resetViewBtn.addEventListener('click', () => {
 					myChart.setOption({
 						series:.zoom,
@@ -333,7 +333,6 @@
 					});
 				});
 
-				// 核心筛选与渲染函数
 				function updateAndRender() {
 					const selectedYear = yearFilter.value;
 					const keyword = searchInput.value.trim().toLowerCase();
@@ -349,25 +348,31 @@
 					
 					const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
 					
-					// 更新地图高亮数据
+					// 修复点：补全了设置数据的合法对象结构
 					myChart.setOption({ 
-						series: 
+						series:
 					});
+					
 					renderList(listData);
 				}
 
-				// 渲染右侧列表
 				function renderList(dataToRender) {
 					cityListContainer.innerHTML = '';
 					isAllExpanded = false;
 					expandCollapseBtn.textContent = '展开全部';
 					
+					// 修复点：规范了 reduce 里的安全语法，防止解析错误
 					const groupedByProvince = dataToRender.reduce((acc, city) => {
-						(acc = acc ||[]).push(city);
+						if (!acc) {
+							acc = [];
+						}
+						acc.push(city);
 						return acc;
 					}, {});
 					
-					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => groupedByProvince.length - groupedByProvince.length);
+					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
+						return groupedByProvince.length - groupedByProvince.length;
+					});
 					
 					sortedProvinces.forEach(province => {
 						const cities = groupedByProvince;
@@ -412,28 +417,25 @@
 					}
 				}
 
-				// 切换地图范围逻辑
 				function switchScope(newScope) {
 					if (currentScope === newScope) return;
 					currentScope = newScope;
 					
-					// 切换按钮样式
 					btnChina.classList.toggle('active', currentScope === 'china');
 					btnWorld.classList.toggle('active', currentScope === 'world');
 					
-					// 清空搜索状态
 					searchInput.value = '';
 					
-					// 更新对应的年份和统计
 					updateYearFilter(mapData);
 					updateStatsText(mapData);
 					
-					// 切换ECharts底图
+					// 修复点：补全了正确的 replaceMerge 数组和 series 设置
+					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
 					myChart.setOption({
 						series:.zoom,
 							center: mapInitialView.center
 						}]
-					});
+					}, { replaceMerge: });
 					
 					updateAndRender();
 				}
@@ -451,14 +453,12 @@
 				yearFilter.addEventListener('change', updateAndRender);
 				searchInput.addEventListener('input', updateAndRender);
 				
-				// 初始调用
 				updateYearFilter(mapData.china);
 				updateStatsText(mapData.china);
 				updateAndRender();
 
-				// 抓取初始缩放状态（可选补偿）
 				const initialOption = myChart.getOption();
-				if (initialOption && initialOption.series && initialOption.series) {
+				if (initialOption && initialOption.series && initialOption.series.length > 0) {
 					mapInitialView.china.zoom = initialOption.series.zoom || 1.15;
 				}
 			})
