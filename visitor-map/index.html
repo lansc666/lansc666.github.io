@@ -192,10 +192,9 @@
 
 			let isAllExpanded = false;
 			
-			// 全局状态管理
-			let currentScope = 'china'; // 当前视图：'china' 或 'world'
+			let currentScope = 'china';
 			let mapData = {
-				china: [],
+				china:[],
 				world:[]
 			};
 			let mapInitialView = {
@@ -206,18 +205,41 @@
 			window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
 			backToTopBtn.addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-			// 修复点：添加了被吞掉的括号数组[]，保证4个文件并发加载
-			Promise.all()
-			.then(() => {
+			// 绝对安全的加载写法，避免代码被解析器吃掉
+			let p1 = fetch(chinaGeoJsonPath).then(res => res.json());
+			let p2 = fetch(worldGeoJsonPath).then(res => res.json());
+			let p3 = fetch(travelDataChinaPath).then(res => res.json());
+			let p4 = fetch(travelDataWorldPath).then(res => res.json());
+
+			let fetchPromises = new Array(p1, p2, p3, p4);
+
+			Promise.all(fetchPromises)
+			.then(function(results) {
+				let chinaGeoJson = results;
+				let worldGeoJson = results;
+				let travelDataChina = results;
+				let travelDataWorld = results;
+
 				loadingIndicator.style.display = 'none';
-				
-				// 注册两张地图
+
 				echarts.registerMap('china-map', chinaGeoJson);
 				echarts.registerMap('world-map', worldGeoJson);
-				
-				// 保存数据
+
 				mapData.china = travelDataChina;
 				mapData.world = travelDataWorld;
+
+				let myPieces = new Array({ value: 1, color: '#5cacec' });
+				
+				let initialSeries = new Array({
+					type: 'map',
+					map: 'china-map',
+					roam: true,
+					zoom: 1.15,
+					selectedMode: false,
+					itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
+					emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
+					data:[]
+				});
 
 				const baseOption = {
 					tooltip: {
@@ -228,7 +250,8 @@
 						hideDelay: 200,
 						formatter: function(params) {
 							if (params.data && params.data.value === 1) {
-								const info = mapData.find(d => d.name === params.name);
+								let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+								const info = currentData.find(d => d.name === params.name);
 								if (info) {
 									const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
 									const imageHtml = info.image && info.image !== "N/A" ? `<img src="${info.image}" alt="${info.name}" loading="lazy">` : '';
@@ -243,15 +266,12 @@
 							return params.name;
 						}
 					},
-					// 修复点：补全了被吞掉的 pieces 数组
 					visualMap: {
 						type: 'piecewise',
 						show: false,
-						pieces:
+						pieces: myPieces
 					},
-					// 修复点：补全了被吞掉的 series 数组和对象结构
-					series:
-					}]
+					series: initialSeries
 				};
 				
 				myChart.setOption(baseOption);
@@ -287,7 +307,8 @@
 				});
 				
 				function showMobilePanel(cityName) {
-					const info = mapData.find(d => d.name === cityName);
+					let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+					const info = currentData.find(d => d.name === cityName);
 					if (info) {
 						mobileTooltipCity.textContent = info.name;
 						const descriptionHtml = info.describe && info.describe !== "N/A" ? `<div class="desc">${info.describe}</div>` : '';
@@ -326,17 +347,21 @@
 				}
 
 				resetViewBtn.addEventListener('click', () => {
+					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
+					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
+					let resetSeries = new Array({
+						zoom: targetZoom,
+						center: targetCenter
+					});
 					myChart.setOption({
-						series:.zoom,
-							center: mapInitialView.center
-						}]
+						series: resetSeries
 					});
 				});
 
 				function updateAndRender() {
 					const selectedYear = yearFilter.value;
 					const keyword = searchInput.value.trim().toLowerCase();
-					let filteredData = mapData;
+					let filteredData = currentScope === 'china' ? mapData.china : mapData.world;
 					
 					if (selectedYear !== 'all') {
 						if (selectedYear === '常住') {
@@ -348,9 +373,16 @@
 					
 					const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
 					
-					// 修复点：补全了设置数据的合法对象结构
+					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
+					let currentSeriesData = listData.map(d => ({ name: d.name, value: 1 }));
+					
+					let updateSeries = new Array({
+						map: targetMap,
+						data: currentSeriesData
+					});
+					
 					myChart.setOption({ 
-						series:
+						series: updateSeries
 					});
 					
 					renderList(listData);
@@ -361,21 +393,21 @@
 					isAllExpanded = false;
 					expandCollapseBtn.textContent = '展开全部';
 					
-					// 修复点：规范了 reduce 里的安全语法，防止解析错误
 					const groupedByProvince = dataToRender.reduce((acc, city) => {
-						if (!acc) {
-							acc = [];
+						let prov = city.province || '未知';
+						if (!acc[prov]) {
+							acc[prov] = [];
 						}
-						acc.push(city);
+						acc[prov].push(city);
 						return acc;
 					}, {});
 					
 					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
-						return groupedByProvince.length - groupedByProvince.length;
+						return groupedByProvince[b].length - groupedByProvince[a].length;
 					});
 					
 					sortedProvinces.forEach(province => {
-						const cities = groupedByProvince;
+						const cities = groupedByProvince[province];
 						const provinceDiv = document.createElement('div');
 						provinceDiv.className = 'province';
 						provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
@@ -387,7 +419,9 @@
 							provinceDiv.classList.toggle('expanded');
 							citySubListDiv.style.display = provinceDiv.classList.contains('expanded') ? 'block' : 'none';
 							myChart.dispatchAction({ type: 'downplay' });
-							myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: cities.map(c => c.name) });
+							
+							let namesToHighlight = cities.map(c => c.name);
+							myChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: namesToHighlight });
 						});
 						
 						cities.forEach(city => {
@@ -426,16 +460,24 @@
 					
 					searchInput.value = '';
 					
-					updateYearFilter(mapData);
-					updateStatsText(mapData);
+					let currentData = currentScope === 'china' ? mapData.china : mapData.world;
+					updateYearFilter(currentData);
+					updateStatsText(currentData);
 					
-					// 修复点：补全了正确的 replaceMerge 数组和 series 设置
 					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
+					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
+					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
+					
+					let switchSeries = new Array({
+						map: targetMap,
+						zoom: targetZoom,
+						center: targetCenter
+					});
+					
+					let replaceConfig = new Array('series');
 					myChart.setOption({
-						series:.zoom,
-							center: mapInitialView.center
-						}]
-					}, { replaceMerge: });
+						series: switchSeries
+					}, { replaceMerge: replaceConfig });
 					
 					updateAndRender();
 				}
@@ -459,7 +501,8 @@
 
 				const initialOption = myChart.getOption();
 				if (initialOption && initialOption.series && initialOption.series.length > 0) {
-					mapInitialView.china.zoom = initialOption.series.zoom || 1.15;
+					mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
+					mapInitialView.world.zoom = 1.15;
 				}
 			})
 			.catch(error => {
