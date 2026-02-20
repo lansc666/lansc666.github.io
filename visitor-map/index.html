@@ -58,7 +58,7 @@
 	.tooltip-card .desc { font-size: 14px; font-style: italic; color: #555; margin-bottom: 4px; }
 	.back-to-top { position: fixed; bottom: 30px; right: 30px; width: 40px; height: 40px; background-color: rgba(0, 0, 0, 0.5); color: white; text-align: center; line-height: 40px; border-radius: 50%; text-decoration: none; font-size: 24px; display: none; z-index: 100; transition: opacity 0.3s; }
 	
-	/* --- 【最终优化】移动端专属悬浮面板样式 --- */
+	/* --- 移动端专属悬浮面板样式 --- */
 	#mobile-tooltip-panel {
 		position: fixed;
 		bottom: 0; left: 0; right: 0;
@@ -72,18 +72,11 @@
 		max-height: 85vh;
 		display: none;
 		box-sizing: border-box;
-		display: flex;
 		flex-direction: column;
 	}
 	#mobile-tooltip-panel.active { transform: translateY(0); }
 	
-	.panel-header {
-		position: relative;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		margin-bottom: 8px;
-	}
+	.panel-header { position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; }
 	.panel-header .city { font-size: 20px; font-weight: bold; margin: 0; }
 	#mobile-tooltip-close { position: absolute; top: 50%; right: 0; transform: translateY(-50%); font-size: 24px; color: #aaa; border: none; background: none; cursor: pointer; padding: 5px; }
 	
@@ -139,9 +132,9 @@
 			</div>
 			<div class="sidebar-footer">
 				<div class="busuanzi-container">
-					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_site_uv">加载中...</span></div>
+					<div class="busuanzi-item"><i class="fas fa-user"></i> <span id="busuanzi_site_uv">加载中...</span></div>
 					<div class="busuanzi-item">|</div>
-					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_site_pv">加载中...</span></div>
+					<div class="busuanzi-item"><i class="fas fa-eye"></i> <span id="busuanzi_site_pv">加载中...</span></div>
 				</div>
 				<p id="stats-counter">统计中...</p>
 				<p>照片均为本人拍摄，版权所有©</p>
@@ -163,7 +156,6 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
-			// 文件路径配置
 			const chinaGeoJsonPath = "/travel-map/city_merged.geojson";
 			const worldGeoJsonPath = "/travel-map/world.geojson";
 			const travelDataChinaPath = "/travel-map/traveldata_china.json";
@@ -190,11 +182,11 @@
 			let imageViewer = null;
 
 			let isAllExpanded = false;
-			
 			let currentScope = 'china';
+			
 			let mapData = {
-				china: [],
-				world: []
+				china: new Array(),
+				world: new Array()
 			};
 			let mapInitialView = {
 				china: { zoom: 1.15, center: null },
@@ -209,12 +201,14 @@
 			let p3 = fetch(travelDataChinaPath).then(res => res.json());
 			let p4 = fetch(travelDataWorldPath).then(res => res.json());
 
-			Promise.all([p1, p2, p3, p4])
+			// 完全绕开中括号的安全数组写法
+			Promise.all(new Array(p1, p2, p3, p4))
 			.then(function(results) {
-				let chinaGeoJson = results[0];
-				let worldGeoJson = results[1];
-				let travelDataChina = results[2];
-				let travelDataWorld = results[3];
+				// 使用 .at() 避免中括号被吃
+				let chinaGeoJson = results.at(0);
+				let worldGeoJson = results.at(1);
+				let travelDataChina = results.at(2);
+				let travelDataWorld = results.at(3);
 
 				loadingIndicator.style.display = 'none';
 
@@ -252,9 +246,9 @@
 					visualMap: {
 						type: 'piecewise',
 						show: false,
-						pieces: [{ value: 1, color: '#5cacec' }]
+						pieces: new Array({ value: 1, color: '#5cacec' })
 					},
-					series: [{
+					series: new Array({
 						type: 'map',
 						map: 'china-map',
 						roam: true,
@@ -262,8 +256,8 @@
 						selectedMode: false,
 						itemStyle: { areaColor: '#e9f1f6', borderColor: '#b9d4e9', borderWidth: 1 },
 						emphasis: { label: { show: false }, itemStyle: { areaColor: '#E58B47', borderColor: '#FFF', borderWidth: 2 }},
-						data: mapData.china.map(d => ({ name: d.name, value: 1 }))
-					}]
+						data: new Array()
+					})
 				};
 				
 				myChart.setOption(baseOption);
@@ -342,10 +336,10 @@
 					let targetZoom = currentScope === 'china' ? mapInitialView.china.zoom : mapInitialView.world.zoom;
 					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
 					myChart.setOption({
-						series: [{
+						series: new Array({
 							zoom: targetZoom,
 							center: targetCenter
-						}]
+						})
 					});
 				});
 
@@ -363,15 +357,14 @@
 					}
 					
 					const listData = keyword ? filteredData.filter(city => city.name.toLowerCase().includes(keyword)) : filteredData;
-					
 					const targetMap = currentScope === 'china' ? 'china-map' : 'world-map';
 					let currentSeriesData = listData.map(d => ({ name: d.name, value: 1 }));
 					
-					myChart.setOption({ 
-						series: [{
+					myChart.setOption({ 
+						series: new Array({
 							map: targetMap,
 							data: currentSeriesData
-						}]
+						})
 					});
 					
 					renderList(listData);
@@ -382,21 +375,22 @@
 					isAllExpanded = false;
 					expandCollapseBtn.textContent = '展开全部';
 					
-					const groupedByProvince = dataToRender.reduce((acc, city) => {
+					// 使用 Map 代替字面量对象，完美避开中括号的属性访问
+					let groupedMap = new Map();
+					dataToRender.forEach(city => {
 						let prov = city.province || '未知';
-						if (!acc[prov]) {
-							acc[prov] = [];
+						if (!groupedMap.has(prov)) {
+							groupedMap.set(prov, new Array());
 						}
-						acc[prov].push(city);
-						return acc;
-					}, {});
+						groupedMap.get(prov).push(city);
+					});
 					
-					const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
-						return groupedByProvince[b].length - groupedByProvince[a].length;
+					let sortedProvinces = Array.from(groupedMap.keys()).sort((a, b) => {
+						return groupedMap.get(b).length - groupedMap.get(a).length;
 					});
 					
 					sortedProvinces.forEach(province => {
-						const cities = groupedByProvince[province];
+						const cities = groupedMap.get(province);
 						const provinceDiv = document.createElement('div');
 						provinceDiv.className = 'province';
 						provinceDiv.innerHTML = `<span class="province-toggle-arrow">▶</span><span>${province} (${cities.length})</span>`;
@@ -458,13 +452,12 @@
 					let targetCenter = currentScope === 'china' ? mapInitialView.china.center : mapInitialView.world.center;
 					
 					myChart.setOption({
-						series: [{
+						series: new Array({
 							map: targetMap,
 							zoom: targetZoom,
-							center: targetCenter,
-							data: currentData.map(d => ({ name: d.name, value: 1 }))
-						}]
-					}, { replaceMerge: ['series'] });
+							center: targetCenter
+						})
+					}, { replaceMerge: new Array('series') });
 					
 					updateAndRender();
 				}
@@ -488,7 +481,7 @@
 
 				const initialOption = myChart.getOption();
 				if (initialOption && initialOption.series && initialOption.series.length > 0) {
-					mapInitialView.china.zoom = initialOption.series[0].zoom || 1.15;
+					mapInitialView.china.zoom = initialOption.series.at(0).zoom || 1.15;
 					mapInitialView.world.zoom = 1.15;
 				}
 			})
