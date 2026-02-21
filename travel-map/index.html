@@ -193,12 +193,11 @@
                 if (worldGeoJson.features) {
                     worldGeoJson.features.forEach(function(feature) {
                         let props = feature.properties;
-                        
                         if (props.NAME_CHN) {
                             props.name = props.NAME_CHN;
                         } else {
-                                props.name = props.NAME_ENG || "未命名区域";
-                            }
+                            // 如果中文名是 null，尝试英文名；如果英文还是 null，就叫 "未命名区域"
+                            props.name = props.NAME_ENG || "未命名区域";
                         }
                     });
                 }
