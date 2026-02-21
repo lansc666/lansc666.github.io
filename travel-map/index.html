@@ -189,13 +189,16 @@
 
                 loadingIndicator.style.display = 'none';
 
-                // 【关键点2】修复 world.geojson 的名字
                 // ECharts 计算地图边界和渲染都需要 'name' 属性
                 if (worldGeoJson.features) {
                     worldGeoJson.features.forEach(function(feature) {
-                        // 把 NAME_CHN 赋值给 name
-                        if (feature.properties && feature.properties.NAME_CHN) {
-                            feature.properties.name = feature.properties.NAME_CHN;
+                        let props = feature.properties;
+                        
+                        if (props.NAME_CHN) {
+                            props.name = props.NAME_CHN;
+                        } else {
+                                props.name = props.NAME_ENG || "未命名区域";
+                            }
                         }
                     });
                 }
