@@ -143,6 +143,7 @@
             const yearFilter = document.getElementById('year-filter');
             const statsCounter = document.getElementById('stats-counter');
             const loadingIndicator = document.querySelector('.loading-indicator');
+			const mapApprovalDiv = document.querySelector('.map-approval-number'); 
             const resetViewBtn = document.querySelector('.reset-view-btn');
             const backToTopBtn = document.querySelector('.back-to-top');
             const expandCollapseBtn = document.getElementById('expandCollapseBtn');
@@ -168,7 +169,7 @@
             // 世界中心：经度0，纬度20 (大西洋/非洲位置，视野好)
             const mapConfigs = {
                 china: { zoom: 1.2, center: [104.5, 29] },
-                world: { zoom: 1.2, center: [0, 5] } 
+                world: { zoom: 1.2, center: [0, 10] } 
             };
 
             window.addEventListener('scroll', () => { backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none'; });
@@ -330,7 +331,14 @@
                     btnChina.classList.toggle('active', currentScope === 'china');
                     btnWorld.classList.toggle('active', currentScope === 'world');
                     searchInput.value = '';
-
+					
+					const mapApprovalDiv = document.querySelector('.map-approval-number');
+                    if (currentScope === 'china') {
+                        mapApprovalDiv.innerHTML = 'GS(2024)0650';
+                    } else {
+                        mapApprovalDiv.innerHTML = 'GS(2021)648'; 
+                    }
+					
                     // 调用核心渲染
                     renderMap(currentScope);
                 }
@@ -365,8 +373,8 @@
                 function updateStatsText(data) {
                     const count = data.length;
                     const groupCount = new Set(data.map(d => d.province)).size;
-                    const label1 = currentScope === 'china' ? '省份' : '国家/地区';
-                    const label2 = currentScope === 'china' ? '城市' : '地点';
+                    const label1 = currentScope === 'china' ? '省份' : '大洲';
+                    const label2 = currentScope === 'china' ? '城市' : '国家';
                     statsCounter.textContent = `已走过 ${groupCount} 个${label1} / ${count} 个${label2}`;
                 }
 
