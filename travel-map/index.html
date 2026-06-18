@@ -372,7 +372,15 @@
 
                 function updateStatsText(data) {
                     const count = data.length;
-                    const groupCount = new Set(data.map(d => d.province)).size;
+					const allProvinces = new Set();
+					data.forEach(d => {
+						if (Array.isArray(d.province)) {
+							d.province.forEach(p => allProvinces.add(p));
+						} else if (d.province) {
+							allProvinces.add(d.province);
+						}
+					});
+					const groupCount = allProvinces.size;
                     const label1 = currentScope === 'china' ? '省份' : '大洲';
                     const label2 = currentScope === 'china' ? '城市' : '国家';
                     statsCounter.textContent = `已走过 ${groupCount} 个${label1} / ${count} 个${label2}`;
@@ -407,12 +415,16 @@
                     isAllExpanded = false;
                     expandCollapseBtn.textContent = '展开全部';
                     
-                    const groupedByProvince = dataToRender.reduce((acc, city) => {
-                        let prov = city.province || '未知';
-                        if (!acc[prov]) { acc[prov] = []; }
-                        acc[prov].push(city);
-                        return acc;
-                    }, {});
+					const groupedByProvince = {};
+					dataToRender.forEach(city => {
+						const provs = Array.isArray(city.province) ? city.province : [city.province || '未知'];
+						provs.forEach(prov => {
+							if (!groupedByProvince[prov]) {
+								groupedByProvince[prov] = [];
+							}
+							groupedByProvince[prov].push(city);
+						});
+					});
                     
                     const sortedProvinces = Object.keys(groupedByProvince).sort((a, b) => {
                         return groupedByProvince[b].length - groupedByProvince[a].length;
